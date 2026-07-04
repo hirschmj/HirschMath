@@ -1,0 +1,2587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bright Steps Practice</title>
+  <style>
+    :root {
+      --ink: #253047;
+      --muted: #60708f;
+      --paper: #fffdf8;
+      --line: #dde5f0;
+      --blue: #3577e5;
+      --blue-soft: #e9f1ff;
+      --green: #25a66a;
+      --green-soft: #e8f8ef;
+      --yellow: #f5b833;
+      --yellow-soft: #fff4d6;
+      --coral: #f26b5d;
+      --coral-soft: #ffeae7;
+      --violet: #7367d8;
+      --violet-soft: #efedff;
+      --shadow: 0 14px 38px rgba(35, 48, 71, 0.13);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(245, 184, 51, 0.24), transparent 28rem),
+        radial-gradient(circle at 95% 15%, rgba(53, 119, 229, 0.2), transparent 30rem),
+        linear-gradient(135deg, #f7fbff 0%, #fff9ec 100%);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    .app {
+      width: min(1180px, calc(100% - 28px));
+      margin: 0 auto;
+      padding: 18px 0 28px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px;
+      border: 1px solid rgba(221, 229, 240, 0.9);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.92);
+      box-shadow: var(--shadow);
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 210px;
+    }
+
+    .brand-mark {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #fff;
+      background: conic-gradient(from 210deg, var(--blue), var(--green), var(--yellow), var(--coral), var(--blue));
+      font-size: 1.65rem;
+      font-weight: 900;
+      box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.72);
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 2px;
+      font-size: clamp(1.28rem, 2vw, 1.85rem);
+      letter-spacing: 0;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .profile-strip {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .pill-select,
+    .field {
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .field:focus,
+    .pill-select:focus,
+    textarea:focus {
+      border-color: var(--blue);
+      box-shadow: 0 0 0 3px rgba(53, 119, 229, 0.16);
+    }
+
+    .btn {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      border-radius: var(--radius);
+      padding: 9px 13px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid var(--line);
+      font-weight: 750;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(35, 48, 71, 0.13);
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: var(--blue);
+      border-color: var(--blue);
+    }
+
+    .btn.green {
+      color: #fff;
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .btn.coral {
+      color: #fff;
+      background: var(--coral);
+      border-color: var(--coral);
+    }
+
+    .btn.ghost {
+      background: transparent;
+    }
+
+    .main {
+      display: grid;
+      grid-template-columns: 242px minmax(0, 1fr);
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .sidebar,
+    .panel {
+      border: 1px solid rgba(221, 229, 240, 0.92);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 248, 0.94);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      padding: 12px;
+      align-self: start;
+      position: sticky;
+      top: 98px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+      padding: 10px;
+      border-radius: var(--radius);
+      color: var(--ink);
+      background: transparent;
+      font-weight: 800;
+      text-align: left;
+    }
+
+    .nav-btn.active {
+      background: var(--blue-soft);
+      color: #174d9c;
+      box-shadow: inset 4px 0 0 var(--blue);
+    }
+
+    .nav-icon {
+      width: 30px;
+      height: 30px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      background: #fff;
+      border: 1px solid var(--line);
+      flex: 0 0 auto;
+    }
+
+    .content {
+      min-width: 0;
+    }
+
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    .panel {
+      padding: clamp(14px, 2vw, 22px);
+      margin-bottom: 18px;
+    }
+
+    .panel-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .panel h2 {
+      font-size: clamp(1.35rem, 2.3vw, 2rem);
+      margin-bottom: 5px;
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+    }
+
+    .cards {
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    }
+
+    .skill-card {
+      min-height: 160px;
+      padding: 15px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .skill-card.math {
+      border-top: 5px solid var(--blue);
+    }
+
+    .skill-card.write {
+      border-top: 5px solid var(--violet);
+    }
+
+    .skill-card h3 {
+      margin-bottom: 6px;
+      font-size: 1.04rem;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 9px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 30px;
+      padding: 5px 9px;
+      border-radius: var(--radius);
+      background: var(--blue-soft);
+      color: #174d9c;
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    .tag.green {
+      background: var(--green-soft);
+      color: #167648;
+    }
+
+    .tag.yellow {
+      background: var(--yellow-soft);
+      color: #8d6200;
+    }
+
+    .tag.coral {
+      background: var(--coral-soft);
+      color: #a63d32;
+    }
+
+    .tag.violet {
+      background: var(--violet-soft);
+      color: #4b3fb1;
+    }
+
+    .practice-box {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      padding: clamp(14px, 2vw, 22px);
+    }
+
+    .question {
+      min-height: 86px;
+      display: grid;
+      align-content: center;
+      padding: 16px;
+      border-radius: var(--radius);
+      background: linear-gradient(135deg, #f7fbff, #fff9ec);
+      border: 1px solid var(--line);
+      font-size: clamp(1.25rem, 2.4vw, 1.9rem);
+      font-weight: 850;
+      line-height: 1.28;
+      white-space: pre-line;
+    }
+
+    .work-area {
+      display: none;
+      margin-top: 12px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fbfcff;
+    }
+
+    .work-area.active {
+      display: block;
+    }
+
+    .stack-work {
+      width: fit-content;
+      max-width: 100%;
+      margin: 0 auto;
+      font-family: Consolas, "Courier New", monospace;
+    }
+
+    .stack-row {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 44px;
+      align-items: center;
+      justify-content: end;
+      gap: 4px;
+      min-height: 42px;
+    }
+
+    .stack-cell {
+      min-height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      font-size: 1.35rem;
+      font-weight: 850;
+    }
+
+    .carry-cell {
+      width: 44px;
+      height: 34px;
+      border: 1px dashed #aebbd0;
+      border-radius: var(--radius);
+      text-align: center;
+      background: #fff;
+      color: var(--blue);
+      font-weight: 800;
+    }
+
+    .answer-cell {
+      width: 44px;
+      height: 38px;
+      border: 2px solid #bcd0ea;
+      border-radius: var(--radius);
+      text-align: center;
+      background: #fff;
+      color: var(--ink);
+      font-size: 1.15rem;
+      font-weight: 850;
+    }
+
+    .answer-cell:focus,
+    .carry-cell:focus {
+      border-color: var(--blue);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(53, 119, 229, 0.16);
+    }
+
+    .op-cell {
+      color: var(--coral);
+    }
+
+    .stack-line {
+      height: 3px;
+      margin: 3px 0 6px;
+      background: var(--ink);
+      border-radius: 999px;
+    }
+
+    .scratch-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(90px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .scratch-grid input,
+    .scratch-note {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px;
+      background: #fff;
+    }
+
+    .scratch-note {
+      width: 100%;
+      min-height: 86px;
+      resize: vertical;
+    }
+
+    .dad-controls {
+      display: none;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: var(--radius);
+      background: #eef7ff;
+      border: 1px solid #bfdcff;
+    }
+
+    .dad-controls.active {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .answer-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto auto;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .answer-row .field {
+      width: 100%;
+      font-size: 1.1rem;
+    }
+
+    .feedback {
+      min-height: 44px;
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      background: #fff;
+      line-height: 1.35;
+    }
+
+    .feedback.good {
+      background: var(--green-soft);
+      border-color: #bce8cf;
+      color: #126940;
+    }
+
+    .feedback.try {
+      background: var(--yellow-soft);
+      border-color: #f8dc8e;
+      color: #7a5600;
+    }
+
+    .feedback.no {
+      background: var(--coral-soft);
+      border-color: #ffc4bc;
+      color: #92362c;
+    }
+
+    .progress-line {
+      width: 100%;
+      height: 11px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e9edf5;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, var(--green), var(--blue));
+      transition: width 0.3s ease;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 0.65fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 190px;
+      resize: vertical;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      color: var(--ink);
+      padding: 13px;
+      line-height: 1.45;
+      outline: none;
+    }
+
+    .prompt-box {
+      padding: 14px;
+      border-radius: var(--radius);
+      background: var(--violet-soft);
+      border: 1px solid #d8d3ff;
+      line-height: 1.4;
+      font-weight: 750;
+    }
+
+    .checklist {
+      display: grid;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .check-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.94rem;
+    }
+
+    .check-item.found {
+      color: #126940;
+      font-weight: 800;
+    }
+
+    .check-item.missing {
+      color: #92362c;
+      font-weight: 800;
+    }
+
+    .dash-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(130px, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 13px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 4px;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 620px;
+    }
+
+    th,
+    td {
+      padding: 11px 12px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      background: #f7f9fc;
+      font-size: 0.88rem;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .list-item {
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+    }
+
+    .parent-lock {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: end;
+      max-width: 540px;
+    }
+
+    .settings-row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 800;
+    }
+
+    .email-preview {
+      width: 100%;
+      min-height: 310px;
+      white-space: pre-wrap;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.92rem;
+      background: #fbfcff;
+    }
+
+    .empty {
+      padding: 18px;
+      border-radius: var(--radius);
+      border: 1px dashed #bcc8da;
+      color: var(--muted);
+      background: rgba(255, 255, 255, 0.72);
+      text-align: center;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 18px;
+      background: rgba(37, 48, 71, 0.48);
+      z-index: 30;
+    }
+
+    .modal-backdrop.open {
+      display: grid;
+    }
+
+    .modal {
+      width: min(460px, 100%);
+      padding: 20px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .footer-note {
+      margin: 18px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 900px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+        position: static;
+      }
+
+      .profile-strip {
+        justify-content: flex-start;
+      }
+
+      .main {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .nav-btn {
+        margin-bottom: 0;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .nav-btn span:last-child {
+        display: none;
+      }
+
+      .two-col,
+      .settings-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dash-grid {
+        grid-template-columns: repeat(2, minmax(130px, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .app {
+        width: min(100% - 18px, 1180px);
+      }
+
+      .sidebar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .answer-row {
+        grid-template-columns: 1fr;
+      }
+
+      .dash-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .parent-lock {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">5</div>
+        <div>
+          <h1>Bright Steps Practice</h1>
+          <p class="subtitle">Math and writing for rising 5th graders</p>
+        </div>
+      </div>
+      <div class="profile-strip">
+        <select id="profileSelect" class="pill-select" aria-label="Choose student profile"></select>
+        <button class="btn primary" id="addProfileBtn" type="button">+ Student</button>
+      </div>
+    </header>
+
+    <main class="main">
+      <nav class="sidebar" aria-label="Main sections">
+        <button class="nav-btn active" data-view="home" type="button"><span class="nav-icon">🏠</span><span>Home</span></button>
+        <button class="nav-btn" data-view="math" type="button"><span class="nav-icon">➗</span><span>Math</span></button>
+        <button class="nav-btn" data-view="writing" type="button"><span class="nav-icon">✏️</span><span>Writing</span></button>
+        <button class="nav-btn" data-view="dashboard" type="button"><span class="nav-icon">📊</span><span>Progress</span></button>
+        <button class="nav-btn" data-view="parent" type="button"><span class="nav-icon">🔒</span><span>Parent</span></button>
+      </nav>
+
+      <section class="content">
+        <div class="view active" id="homeView">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2 id="welcomeTitle">Welcome!</h2>
+                <p class="subtitle" id="welcomeSubtitle">Choose a practice area and start building your skills.</p>
+              </div>
+              <span class="tag green" id="todayTimeTag">0 min today</span>
+            </div>
+            <div class="dash-grid" id="homeMetrics"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Recommended Next Steps</h2>
+                <p class="subtitle">Based on accuracy, missed concepts, and recent work.</p>
+              </div>
+            </div>
+            <div id="recommendations" class="list"></div>
+          </section>
+        </div>
+
+        <div class="view" id="mathView">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Math Practice</h2>
+                <p class="subtitle">Pick a skill, answer questions, and watch the challenge adjust.</p>
+              </div>
+              <span class="tag" id="mathLevelTag">Level 1</span>
+            </div>
+            <div class="grid cards" id="mathSkillCards"></div>
+          </section>
+
+          <section class="panel hidden" id="mathPracticePanel">
+            <div class="panel-head">
+              <div>
+                <h2 id="mathPracticeTitle">Practice</h2>
+                <p class="subtitle" id="mathPracticeSub">Answer 5 questions to complete an activity.</p>
+              </div>
+              <button class="btn ghost" id="endMathBtn" type="button">Close</button>
+            </div>
+            <div class="practice-box">
+              <div class="stat-row">
+                <span class="tag" id="mathCountTag">Question 1 of 5</span>
+                <span class="tag green" id="mathStreakTag">Streak 0</span>
+                <span class="tag yellow" id="mathSkillLevelTag">Adaptive level 1</span>
+              </div>
+              <div class="progress-line" style="margin: 12px 0 14px;">
+                <div class="progress-fill" id="mathProgressFill"></div>
+              </div>
+              <div class="question" id="mathQuestion"></div>
+              <div class="work-area" id="mathWorkArea"></div>
+              <div class="dad-controls" id="dadControls">
+                <span class="tag">Dad QC</span>
+                <button class="btn" id="dadLevelDownBtn" type="button">Level -</button>
+                <span class="tag yellow" id="dadLevelReadout">Level 1</span>
+                <button class="btn" id="dadLevelUpBtn" type="button">Level +</button>
+                <button class="btn" id="dadNewQuestionBtn" type="button">New at level</button>
+              </div>
+              <div class="answer-row">
+                <input id="mathAnswer" class="field" type="text" autocomplete="off" placeholder="Type your answer" />
+                <button id="checkMathBtn" class="btn primary" type="button">Check</button>
+                <button id="nextMathBtn" class="btn green hidden" type="button">Next</button>
+              </div>
+              <div id="mathFeedback" class="feedback">You can use fractions like 3/4, decimals like 2.5, or words when needed.</div>
+            </div>
+          </section>
+        </div>
+
+        <div class="view" id="writingView">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Writing Studio</h2>
+                <p class="subtitle">Practice clear sentences, strong paragraphs, and thoughtful ideas.</p>
+              </div>
+              <span class="tag violet" id="writingCountTag">0 pieces saved</span>
+            </div>
+            <div class="grid cards" id="writingSkillCards"></div>
+          </section>
+
+          <section class="panel hidden" id="writingPracticePanel">
+            <div class="panel-head">
+              <div>
+                <h2 id="writingPracticeTitle">Writing Practice</h2>
+                <p class="subtitle" id="writingPracticeSub">Use the checklist, then save your work.</p>
+              </div>
+              <button class="btn ghost" id="endWritingBtn" type="button">Close</button>
+            </div>
+            <div class="two-col">
+              <div class="practice-box">
+                <div class="prompt-box" id="writingPrompt"></div>
+                <textarea id="writingResponse" placeholder="Write your answer here..."></textarea>
+                <div class="stat-row" style="margin-top: 12px;">
+                  <span class="tag" id="wordCountTag">0 words</span>
+                  <span class="tag green" id="sentenceCountTag">0 sentences</span>
+                  <span class="tag yellow" id="writingGoalTag">Goal: 5+ sentences</span>
+                </div>
+                <div id="writingFeedback" class="feedback">Your writing coach will give friendly tips as you type.</div>
+                <div class="stat-row" style="margin-top: 12px;">
+                  <button class="btn primary" id="saveWritingBtn" type="button">Save Writing</button>
+                  <button class="btn" id="newPromptBtn" type="button">New Prompt</button>
+                </div>
+              </div>
+              <aside class="practice-box">
+                <h3>Writer Checklist</h3>
+                <div class="checklist" id="writingChecklist"></div>
+              </aside>
+            </div>
+          </section>
+        </div>
+
+        <div class="view" id="dashboardView">
+          <section class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Progress Dashboard</h2>
+                <p class="subtitle">Completed activities, accuracy, writing history, strengths, and practice areas.</p>
+              </div>
+            </div>
+            <div class="dash-grid" id="dashMetrics"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Math Accuracy by Skill</h2>
+            <div class="table-wrap" id="mathAccuracyTable"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Writing Prompt History</h2>
+            <div id="writingHistory" class="list"></div>
+          </section>
+
+          <section class="panel">
+            <h2>Strengths and Practice Areas</h2>
+            <div class="grid cards" id="strengthsNeeds"></div>
+          </section>
+        </div>
+
+        <div class="view" id="parentView">
+          <section class="panel" id="parentGate">
+            <div class="panel-head">
+              <div>
+                <h2>Parent Area</h2>
+                <p class="subtitle">Enter the parent PIN to view reports and reset data. Default PIN: 1234</p>
+              </div>
+            </div>
+            <div class="parent-lock">
+              <label>
+                Parent PIN
+                <input id="pinInput" class="field" type="password" inputmode="numeric" placeholder="1234" />
+              </label>
+              <button class="btn primary" id="unlockParentBtn" type="button">Unlock</button>
+            </div>
+          </section>
+
+          <section class="panel hidden" id="parentPanel">
+            <div class="panel-head">
+              <div>
+                <h2>Parent Settings and Reports</h2>
+                <p class="subtitle">Generate a session or weekly summary that is ready to copy into email.</p>
+              </div>
+              <button class="btn ghost" id="lockParentBtn" type="button">Lock</button>
+            </div>
+
+            <div class="settings-row">
+              <label>
+                Parent email address
+                <input id="parentEmail" class="field" type="email" placeholder="parent@example.com" />
+              </label>
+              <label>
+                Summary type
+                <select id="summaryType" class="field">
+                  <option value="session">Latest session</option>
+                  <option value="weekly">Last 7 days</option>
+                  <option value="all">All progress</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="stat-row" style="margin-bottom: 12px;">
+              <button class="btn primary" id="generateEmailBtn" type="button">Generate Summary</button>
+              <button class="btn green" id="copyEmailBtn" type="button">Copy Summary</button>
+              <button class="btn coral" id="resetStudentBtn" type="button">Reset This Student</button>
+              <button class="btn coral" id="resetAllBtn" type="button">Reset All Data</button>
+            </div>
+
+            <textarea id="emailPreview" class="email-preview" readonly></textarea>
+
+            <p class="small" style="margin-top: 12px;">
+              Email limitation: this single HTML file cannot send mail securely by itself. To send automatically, connect an EmailJS account or a small backend in the commented JavaScript section named emailIntegrationExample.
+            </p>
+          </section>
+        </div>
+      </section>
+    </main>
+    <p class="footer-note">Your progress is saved only in this browser on this computer.</p>
+  </div>
+
+  <div class="modal-backdrop" id="profileModal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div class="modal">
+      <h2 id="profileModalTitle">Add Student</h2>
+      <label>
+        Student name
+        <input id="newProfileName" class="field" type="text" maxlength="28" placeholder="First name" />
+      </label>
+      <div class="modal-actions">
+        <button class="btn" id="cancelProfileBtn" type="button">Cancel</button>
+        <button class="btn primary" id="saveProfileBtn" type="button">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "brightStepsPractice.v1";
+    const ACTIVITY_GOAL = 5;
+
+    const mathSkills = [
+      {
+        id: "addSub",
+        title: "Addition and Subtraction",
+        icon: "+",
+        description: "Multi-digit sums, differences, regrouping, and missing numbers.",
+        concept: "multi-digit operations"
+      },
+      {
+        id: "multDiv",
+        title: "Multiplication and Division",
+        icon: "×",
+        description: "Products, quotients, remainders, and fact fluency.",
+        concept: "multiplication and division"
+      },
+      {
+        id: "fractions",
+        title: "Fractions",
+        icon: "½",
+        description: "Equivalent fractions, comparing, and simple addition.",
+        concept: "fraction reasoning"
+      },
+      {
+        id: "decimals",
+        title: "Decimals",
+        icon: ".",
+        description: "Place value, adding decimals, and comparing amounts.",
+        concept: "decimal place value"
+      },
+      {
+        id: "wordProblems",
+        title: "Word Problems",
+        icon: "?",
+        description: "Read carefully, choose an operation, and explain the answer.",
+        concept: "word problem solving"
+      },
+      {
+        id: "geometry",
+        title: "Geometry and Measurement",
+        icon: "□",
+        description: "Area, perimeter, angles, units, and shapes.",
+        concept: "geometry and measurement"
+      }
+    ];
+
+    const writingSkills = [
+      {
+        id: "sentenceCorrection",
+        title: "Sentence Correction",
+        icon: "✓",
+        description: "Fix capitals, punctuation, grammar, and clarity.",
+        goal: "Make the sentence correct and clear."
+      },
+      {
+        id: "paragraph",
+        title: "Paragraph Writing",
+        icon: "¶",
+        description: "Write one organized paragraph with a main idea and details.",
+        goal: "Write at least 5 sentences."
+      },
+      {
+        id: "opinion",
+        title: "Opinion Writing",
+        icon: "!",
+        description: "State your opinion and support it with reasons.",
+        goal: "Include an opinion, 2 reasons, and an ending."
+      },
+      {
+        id: "narrative",
+        title: "Narrative Writing",
+        icon: "★",
+        description: "Tell a small story with characters, setting, and events.",
+        goal: "Include a beginning, middle, and ending."
+      },
+      {
+        id: "informational",
+        title: "Informational Writing",
+        icon: "i",
+        description: "Explain a topic with facts, examples, and clear order.",
+        goal: "Teach the reader at least 3 facts."
+      },
+      {
+        id: "vocabulary",
+        title: "Stronger Word Choice",
+        icon: "A",
+        description: "Replace plain words with precise, vivid language.",
+        goal: "Use at least 3 stronger words."
+      }
+    ];
+
+    const writingPrompts = {
+      sentenceCorrection: [
+        {
+          text: "Correct this sentence: yesterday me and my friend seen a bright comet in the sky",
+          answer: "Yesterday my friend and I saw a bright comet in the sky.",
+          issues: ["Capitalized the first word", "Changed me and my friend to my friend and I", "Changed seen to saw", "Added ending punctuation"]
+        },
+        {
+          text: "Correct this sentence: the puppy dont like when its bowl is empty",
+          answer: "The puppy doesn't like when its bowl is empty.",
+          issues: ["Capitalized the first word", "Changed dont to doesn't", "Used its correctly", "Added ending punctuation"]
+        },
+        {
+          text: "Correct this sentence: my teacher said bring your notebook pencil and folder",
+          answer: "My teacher said, \"Bring your notebook, pencil, and folder.\"",
+          issues: ["Capitalized the first word", "Added comma before the quote", "Added quotation marks", "Added commas in a list", "Added ending punctuation"]
+        },
+        {
+          text: "Correct this sentence: after school we goed to the park and plays soccer",
+          answer: "After school, we went to the park and played soccer.",
+          issues: ["Capitalized the first word", "Added comma after the opener", "Changed goed to went", "Changed plays to played", "Added ending punctuation"]
+        },
+        {
+          text: "Correct this sentence: nina and marco was excited because they won the contest",
+          answer: "Nina and Marco were excited because they won the contest.",
+          issues: ["Capitalized proper nouns", "Changed was to were", "Added ending punctuation"]
+        },
+        {
+          text: "Correct this sentence: can you help me find my red jacket asked liam",
+          answer: "\"Can you help me find my red jacket?\" asked Liam.",
+          issues: ["Added quotation marks", "Capitalized the first word", "Added a question mark", "Capitalized the speaker's name"]
+        },
+        {
+          text: "Correct this sentence: the books is on the table next to the pencils",
+          answer: "The books are on the table next to the pencils.",
+          issues: ["Capitalized the first word", "Changed is to are", "Added ending punctuation"]
+        },
+        {
+          text: "Correct this sentence: i packed a sandwich an apple and juice for lunch",
+          answer: "I packed a sandwich, an apple, and juice for lunch.",
+          issues: ["Capitalized I", "Added commas in a list", "Added ending punctuation"]
+        }
+      ],
+      paragraph: [
+        "Write a paragraph explaining how to be a helpful teammate.",
+        "Write a paragraph about a place where you feel calm or happy.",
+        "Write a paragraph describing the best way to learn something difficult.",
+        "Write a paragraph about a time you practiced and improved.",
+        "Write a paragraph explaining what makes a classroom feel welcoming.",
+        "Write a paragraph describing your favorite outdoor activity."
+      ],
+      opinion: [
+        "Should kids have homework during summer? Give your opinion and reasons.",
+        "Which is better for a class pet: a fish, a lizard, or no pet? Explain your opinion.",
+        "Should every school day include outdoor learning time? Support your answer.",
+        "Should students choose some of the books they read in class? Explain.",
+        "Is it better to work alone or with a partner on a hard project? Explain.",
+        "Should schools have longer recess for 5th graders? Support your opinion."
+      ],
+      narrative: [
+        "Write a story about finding a mysterious key in an ordinary place.",
+        "Write a story about a character who has to solve a problem without using a phone.",
+        "Write a story that begins with: The map was upside down, but it still showed the way.",
+        "Write a story about a character who hears an unexpected announcement.",
+        "Write a story about a small mistake that turns into an adventure.",
+        "Write a story about a first day that does not go as planned."
+      ],
+      informational: [
+        "Explain how to prepare for the first week of 5th grade.",
+        "Teach a reader about an animal, sport, game, hobby, or place you know well.",
+        "Explain how weather can change people's plans.",
+        "Explain how to stay organized for a long project.",
+        "Teach a reader how a plant, machine, or system works.",
+        "Explain three ways people can help their community."
+      ],
+      vocabulary: [
+        "Rewrite this sentence with stronger words: The big dog went fast across the yard.",
+        "Rewrite this sentence with stronger words: The food was good and the room was nice.",
+        "Rewrite this sentence with stronger words: She was happy when she saw the pretty picture.",
+        "Rewrite this sentence with stronger words: The storm was bad and the wind was loud.",
+        "Rewrite this sentence with stronger words: He walked slowly into the dark room.",
+        "Rewrite this sentence with stronger words: The team felt good after the hard game."
+      ]
+    };
+
+    const praise = [
+      "Nice thinking!",
+      "You stayed with it!",
+      "Strong work!",
+      "That answer has sparkle.",
+      "Your brain is warming up beautifully."
+    ];
+
+    let state = loadState();
+    let currentProfileId = state.currentProfileId;
+    let activeView = "home";
+    let parentUnlocked = false;
+    let mathSession = null;
+    let writingSession = null;
+    let sessionStart = Date.now();
+
+    const els = {
+      profileSelect: document.getElementById("profileSelect"),
+      addProfileBtn: document.getElementById("addProfileBtn"),
+      profileModal: document.getElementById("profileModal"),
+      newProfileName: document.getElementById("newProfileName"),
+      cancelProfileBtn: document.getElementById("cancelProfileBtn"),
+      saveProfileBtn: document.getElementById("saveProfileBtn"),
+      navButtons: Array.from(document.querySelectorAll(".nav-btn")),
+      views: {
+        home: document.getElementById("homeView"),
+        math: document.getElementById("mathView"),
+        writing: document.getElementById("writingView"),
+        dashboard: document.getElementById("dashboardView"),
+        parent: document.getElementById("parentView")
+      },
+      welcomeTitle: document.getElementById("welcomeTitle"),
+      welcomeSubtitle: document.getElementById("welcomeSubtitle"),
+      todayTimeTag: document.getElementById("todayTimeTag"),
+      homeMetrics: document.getElementById("homeMetrics"),
+      recommendations: document.getElementById("recommendations"),
+      mathSkillCards: document.getElementById("mathSkillCards"),
+      mathPracticePanel: document.getElementById("mathPracticePanel"),
+      mathPracticeTitle: document.getElementById("mathPracticeTitle"),
+      mathPracticeSub: document.getElementById("mathPracticeSub"),
+      mathLevelTag: document.getElementById("mathLevelTag"),
+      mathCountTag: document.getElementById("mathCountTag"),
+      mathStreakTag: document.getElementById("mathStreakTag"),
+      mathSkillLevelTag: document.getElementById("mathSkillLevelTag"),
+      mathProgressFill: document.getElementById("mathProgressFill"),
+      mathQuestion: document.getElementById("mathQuestion"),
+      mathWorkArea: document.getElementById("mathWorkArea"),
+      mathAnswer: document.getElementById("mathAnswer"),
+      checkMathBtn: document.getElementById("checkMathBtn"),
+      nextMathBtn: document.getElementById("nextMathBtn"),
+      endMathBtn: document.getElementById("endMathBtn"),
+      mathFeedback: document.getElementById("mathFeedback"),
+      dadControls: document.getElementById("dadControls"),
+      dadLevelDownBtn: document.getElementById("dadLevelDownBtn"),
+      dadLevelReadout: document.getElementById("dadLevelReadout"),
+      dadLevelUpBtn: document.getElementById("dadLevelUpBtn"),
+      dadNewQuestionBtn: document.getElementById("dadNewQuestionBtn"),
+      writingSkillCards: document.getElementById("writingSkillCards"),
+      writingPracticePanel: document.getElementById("writingPracticePanel"),
+      writingPracticeTitle: document.getElementById("writingPracticeTitle"),
+      writingPracticeSub: document.getElementById("writingPracticeSub"),
+      writingPrompt: document.getElementById("writingPrompt"),
+      writingResponse: document.getElementById("writingResponse"),
+      writingChecklist: document.getElementById("writingChecklist"),
+      writingFeedback: document.getElementById("writingFeedback"),
+      writingCountTag: document.getElementById("writingCountTag"),
+      wordCountTag: document.getElementById("wordCountTag"),
+      sentenceCountTag: document.getElementById("sentenceCountTag"),
+      writingGoalTag: document.getElementById("writingGoalTag"),
+      saveWritingBtn: document.getElementById("saveWritingBtn"),
+      newPromptBtn: document.getElementById("newPromptBtn"),
+      endWritingBtn: document.getElementById("endWritingBtn"),
+      dashMetrics: document.getElementById("dashMetrics"),
+      mathAccuracyTable: document.getElementById("mathAccuracyTable"),
+      writingHistory: document.getElementById("writingHistory"),
+      strengthsNeeds: document.getElementById("strengthsNeeds"),
+      parentGate: document.getElementById("parentGate"),
+      parentPanel: document.getElementById("parentPanel"),
+      pinInput: document.getElementById("pinInput"),
+      unlockParentBtn: document.getElementById("unlockParentBtn"),
+      lockParentBtn: document.getElementById("lockParentBtn"),
+      parentEmail: document.getElementById("parentEmail"),
+      summaryType: document.getElementById("summaryType"),
+      generateEmailBtn: document.getElementById("generateEmailBtn"),
+      copyEmailBtn: document.getElementById("copyEmailBtn"),
+      resetStudentBtn: document.getElementById("resetStudentBtn"),
+      resetAllBtn: document.getElementById("resetAllBtn"),
+      emailPreview: document.getElementById("emailPreview")
+    };
+
+    function defaultState() {
+      const firstProfile = createProfile("Student");
+      return {
+        currentProfileId: firstProfile.id,
+        parentEmail: "",
+        parentPin: "1234",
+        profiles: {
+          [firstProfile.id]: firstProfile
+        }
+      };
+    }
+
+    function createProfile(name) {
+      const now = new Date().toISOString();
+      const math = {};
+      mathSkills.forEach((skill) => {
+        math[skill.id] = {
+          attempts: 0,
+          correct: 0,
+          streak: 0,
+          bestStreak: 0,
+          level: 1,
+          missed: {},
+          lastPracticed: null,
+          activities: 0
+        };
+      });
+      const writing = {};
+      writingSkills.forEach((skill) => {
+        writing[skill.id] = {
+          pieces: 0,
+          words: 0,
+          lastPracticed: null
+        };
+      });
+      return {
+        id: makeId(),
+        name,
+        createdAt: now,
+        lastActive: now,
+        timeSpentSeconds: 0,
+        todayKey: dayKey(),
+        todaySeconds: 0,
+        math,
+        writing,
+        activities: [],
+        writingHistory: []
+      };
+    }
+
+    function makeId() {
+      return "id_" + Math.random().toString(36).slice(2) + Date.now().toString(36);
+    }
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return defaultState();
+        const parsed = JSON.parse(raw);
+        if (!parsed.profiles || !Object.keys(parsed.profiles).length) return defaultState();
+        return migrateState(parsed);
+      } catch (error) {
+        return defaultState();
+      }
+    }
+
+    function migrateState(saved) {
+      saved.parentPin = saved.parentPin || "1234";
+      saved.parentEmail = saved.parentEmail || "";
+      Object.values(saved.profiles).forEach((profile) => {
+        profile.timeSpentSeconds = profile.timeSpentSeconds || 0;
+        profile.todayKey = profile.todayKey || dayKey();
+        profile.todaySeconds = profile.todaySeconds || 0;
+        profile.activities = profile.activities || [];
+        profile.writingHistory = profile.writingHistory || [];
+        profile.math = profile.math || {};
+        mathSkills.forEach((skill) => {
+          profile.math[skill.id] = Object.assign({
+            attempts: 0,
+            correct: 0,
+            streak: 0,
+            bestStreak: 0,
+            level: 1,
+            missed: {},
+            lastPracticed: null,
+            activities: 0
+          }, profile.math[skill.id] || {});
+        });
+        profile.writing = profile.writing || {};
+        writingSkills.forEach((skill) => {
+          profile.writing[skill.id] = Object.assign({
+            pieces: 0,
+            words: 0,
+            lastPracticed: null
+          }, profile.writing[skill.id] || {});
+        });
+      });
+      if (!saved.currentProfileId || !saved.profiles[saved.currentProfileId]) {
+        saved.currentProfileId = Object.keys(saved.profiles)[0];
+      }
+      return saved;
+    }
+
+    function saveState() {
+      const profile = getProfile();
+      if (profile) {
+        profile.lastActive = new Date().toISOString();
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function getProfile() {
+      return state.profiles[currentProfileId];
+    }
+
+    function dayKey(date = new Date()) {
+      return date.toISOString().slice(0, 10);
+    }
+
+    function addTime(seconds) {
+      const profile = getProfile();
+      if (!profile) return;
+      const today = dayKey();
+      if (profile.todayKey !== today) {
+        profile.todayKey = today;
+        profile.todaySeconds = 0;
+      }
+      profile.timeSpentSeconds += seconds;
+      profile.todaySeconds += seconds;
+      saveState();
+    }
+
+    function formatMinutes(seconds) {
+      return Math.max(0, Math.round(seconds / 60)) + " min";
+    }
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[char]));
+    }
+
+    function percent(correct, attempts) {
+      if (!attempts) return 0;
+      return Math.round((correct / attempts) * 100);
+    }
+
+    function renderAll() {
+      renderProfiles();
+      renderHome();
+      renderMath();
+      renderWriting();
+      renderDashboard();
+      renderParent();
+    }
+
+    function renderProfiles() {
+      els.profileSelect.innerHTML = Object.values(state.profiles)
+        .map((profile) => `<option value="${profile.id}" ${profile.id === currentProfileId ? "selected" : ""}>${escapeHtml(profile.name)}</option>`)
+        .join("");
+    }
+
+    function renderHome() {
+      const profile = getProfile();
+      resetTodayIfNeeded(profile);
+      els.welcomeTitle.textContent = "Hi, " + profile.name + "!";
+      els.welcomeSubtitle.textContent = "Choose a practice card. Your level changes as you learn.";
+      els.todayTimeTag.textContent = formatMinutes(profile.todaySeconds) + " today";
+      const totals = getTotals(profile);
+      els.homeMetrics.innerHTML = [
+        metric("Math accuracy", totals.mathAccuracy + "%", "Across all math practice"),
+        metric("Activities", totals.activities, "Completed practice sets"),
+        metric("Writing saved", totals.writingPieces, "Prompts and corrections"),
+        metric("Best streak", totals.bestStreak, "Correct answers in a row")
+      ].join("");
+      renderRecommendations(profile);
+    }
+
+    function resetTodayIfNeeded(profile) {
+      if (profile.todayKey !== dayKey()) {
+        profile.todayKey = dayKey();
+        profile.todaySeconds = 0;
+        saveState();
+      }
+    }
+
+    function metric(label, value, note) {
+      return `<div class="metric"><span class="small">${label}</span><strong>${value}</strong><span class="small">${note}</span></div>`;
+    }
+
+    function getTotals(profile) {
+      const mathRows = Object.values(profile.math);
+      const attempts = mathRows.reduce((sum, row) => sum + row.attempts, 0);
+      const correct = mathRows.reduce((sum, row) => sum + row.correct, 0);
+      return {
+        mathAttempts: attempts,
+        mathCorrect: correct,
+        mathAccuracy: percent(correct, attempts),
+        activities: profile.activities.length,
+        writingPieces: profile.writingHistory.length,
+        bestStreak: Math.max(0, ...mathRows.map((row) => row.bestStreak || 0))
+      };
+    }
+
+    function renderRecommendations(profile) {
+      const weak = mathSkills
+        .map((skill) => ({ skill, data: profile.math[skill.id], accuracy: percent(profile.math[skill.id].correct, profile.math[skill.id].attempts) }))
+        .filter((row) => row.data.attempts < 6 || row.accuracy < 75)
+        .sort((a, b) => a.accuracy - b.accuracy || a.data.attempts - b.data.attempts)
+        .slice(0, 3);
+
+      const writingNeeds = writingSkills
+        .map((skill) => ({ skill, data: profile.writing[skill.id] }))
+        .sort((a, b) => a.data.pieces - b.data.pieces)
+        .slice(0, 2);
+
+      const items = [];
+      weak.forEach(({ skill, accuracy, data }) => {
+        const note = data.attempts ? `${accuracy}% accuracy so far` : "not practiced yet";
+        items.push(`<div class="list-item"><strong>${skill.title}</strong><p class="small">${note}. Try a short review set to build confidence.</p><button class="btn primary" type="button" onclick="startMathPractice('${skill.id}')">Practice</button></div>`);
+      });
+      writingNeeds.forEach(({ skill, data }) => {
+        items.push(`<div class="list-item"><strong>${skill.title}</strong><p class="small">${data.pieces ? data.pieces + " saved piece(s)" : "not practiced yet"}. A quick writing prompt would round out today's work.</p><button class="btn" type="button" onclick="startWritingPractice('${skill.id}')">Write</button></div>`);
+      });
+      els.recommendations.innerHTML = items.length ? items.join("") : `<div class="empty">Everything looks balanced. Pick any skill that sounds fun today.</div>`;
+    }
+
+    function renderMath() {
+      const profile = getProfile();
+      const averageLevel = Math.round(mathSkills.reduce((sum, skill) => sum + profile.math[skill.id].level, 0) / mathSkills.length);
+      els.mathLevelTag.textContent = "Average level " + averageLevel;
+      els.mathSkillCards.innerHTML = mathSkills.map((skill) => {
+        const data = profile.math[skill.id];
+        const accuracy = percent(data.correct, data.attempts);
+        const accuracyText = data.attempts ? accuracy + "% accuracy" : "Ready to start";
+        return `
+          <article class="skill-card math">
+            <div>
+              <div class="stat-row"><span class="tag">${skill.icon}</span><span class="tag yellow">Level ${data.level}</span></div>
+              <h3>${skill.title}</h3>
+              <p class="small">${skill.description}</p>
+            </div>
+            <div>
+              <div class="progress-line"><div class="progress-fill" style="width:${accuracy || 8}%"></div></div>
+              <p class="small" style="margin:8px 0;">${accuracyText} · ${data.activities} activities</p>
+              <button class="btn primary" type="button" onclick="startMathPractice('${skill.id}')">Practice</button>
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function startMathPractice(skillId) {
+      const skill = mathSkills.find((item) => item.id === skillId);
+      if (!skill) return;
+      showView("math");
+      const profile = getProfile();
+      mathSession = {
+        skillId,
+        skill,
+        startedAt: Date.now(),
+        questionIndex: 0,
+        correct: 0,
+        answered: false,
+        current: null
+      };
+      els.mathPracticePanel.classList.remove("hidden");
+      els.mathPracticeTitle.textContent = skill.title;
+      els.mathPracticeSub.textContent = "Answer " + ACTIVITY_GOAL + " questions. Hints appear after misses.";
+      nextMathQuestion();
+      els.mathPracticePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function nextMathQuestion() {
+      if (!mathSession) return;
+      if (mathSession.questionIndex >= ACTIVITY_GOAL) {
+        finishMathActivity();
+        return;
+      }
+      const profile = getProfile();
+      const skillData = profile.math[mathSession.skillId];
+      mathSession.current = generateMathQuestion(mathSession.skillId, skillData.level);
+      mathSession.answered = false;
+      els.mathQuestion.textContent = mathSession.current.prompt;
+      renderMathWorkspace(mathSession.current);
+      els.mathAnswer.value = "";
+      els.mathAnswer.disabled = false;
+      els.mathAnswer.readOnly = false;
+      els.mathAnswer.focus();
+      els.checkMathBtn.classList.remove("hidden");
+      els.nextMathBtn.classList.add("hidden");
+      els.mathFeedback.className = "feedback";
+      els.mathFeedback.textContent = "Take your time. A careful answer beats a rushed answer.";
+      updateMathSessionUi();
+    }
+
+    function updateMathSessionUi() {
+      const profile = getProfile();
+      const skillData = profile.math[mathSession.skillId];
+      els.mathCountTag.textContent = "Question " + (mathSession.questionIndex + 1) + " of " + ACTIVITY_GOAL;
+      els.mathStreakTag.textContent = "Streak " + skillData.streak;
+      els.mathSkillLevelTag.textContent = "Adaptive level " + skillData.level;
+      els.mathProgressFill.style.width = Math.round((mathSession.questionIndex / ACTIVITY_GOAL) * 100) + "%";
+      els.dadControls.classList.toggle("active", isDadMode());
+      els.dadLevelReadout.textContent = "Level " + skillData.level;
+    }
+
+    function isDadMode() {
+      const profile = getProfile();
+      return profile && profile.name.trim().toLowerCase() === "dad";
+    }
+
+    function changeDadLevel(delta) {
+      if (!mathSession || !isDadMode()) return;
+      const profile = getProfile();
+      const skillData = profile.math[mathSession.skillId];
+      skillData.level = Math.max(1, Math.min(5, skillData.level + delta));
+      skillData.streak = 0;
+      saveState();
+      nextMathQuestion();
+      renderMath();
+    }
+
+    function renderMathWorkspace(question) {
+      if (!question.work) {
+        els.mathWorkArea.className = "work-area";
+        els.mathWorkArea.innerHTML = "";
+        return;
+      }
+      els.mathWorkArea.className = "work-area active";
+      if (question.work.kind === "stacked") {
+        els.mathWorkArea.innerHTML = renderStackedWork(question.work);
+        return;
+      }
+      if (question.work.kind === "scratch") {
+        els.mathWorkArea.innerHTML = `
+          <strong>Work it out</strong>
+          <p class="small" style="margin:6px 0 8px;">Use these boxes to track the numbers from the story before answering.</p>
+          <div class="scratch-grid">
+            <input aria-label="Important number 1" placeholder="Number 1" />
+            <input aria-label="Important number 2" placeholder="Number 2" />
+            <input aria-label="Operation" placeholder="+ - x or /" />
+          </div>
+          <textarea class="scratch-note" aria-label="Scratch notes" placeholder="Show your thinking here..."></textarea>
+        `;
+      }
+    }
+
+    function renderStackedWork(work) {
+      const top = String(work.top).split("");
+      const bottom = String(work.bottom).split("");
+      const width = Math.max(top.length, bottom.length) + 1;
+      const padTop = Array(width - top.length).fill("").concat(top);
+      const padBottom = Array(width - bottom.length - 1).fill("").concat([work.op], bottom);
+      const boxes = Array(width).fill("").map((_, index) => `<input class="carry-cell" aria-label="${work.op === "+" ? "Carry" : "Borrow"} column ${index + 1}" maxlength="2" />`).join("");
+      const answerBoxes = Array(width).fill("").map((_, index) => `<input class="answer-cell" aria-label="Answer digit column ${index + 1}" maxlength="1" inputmode="numeric" />`).join("");
+      const topRow = padTop.map((digit) => `<div class="stack-cell">${digit}</div>`).join("");
+      const bottomRow = padBottom.map((digit) => `<div class="stack-cell ${digit === work.op ? "op-cell" : ""}">${digit}</div>`).join("");
+      return `
+        <strong>${work.op === "+" ? "Stacked addition" : "Stacked subtraction"}</strong>
+        <p class="small" style="margin:6px 0 8px;">Use the small boxes to mark ${work.op === "+" ? "carries" : "borrows/regroups"} by place value.</p>
+        <div class="stack-work">
+          <div class="stack-row">${boxes}</div>
+          <div class="stack-row">${topRow}</div>
+          <div class="stack-row">${bottomRow}</div>
+          <div class="stack-line"></div>
+          <div class="stack-row">${answerBoxes}</div>
+        </div>
+      `;
+    }
+
+    function checkMathAnswer() {
+      if (!mathSession || mathSession.answered) return;
+      const profile = getProfile();
+      const skillData = profile.math[mathSession.skillId];
+      const userAnswer = els.mathAnswer.value.trim();
+      if (!userAnswer) {
+        els.mathFeedback.className = "feedback try";
+        els.mathFeedback.textContent = "Type an answer first. You've got this.";
+        return;
+      }
+      const correct = isAnswerCorrect(userAnswer, mathSession.current.answer, mathSession.current.type);
+      mathSession.answered = true;
+      skillData.attempts += 1;
+      skillData.lastPracticed = new Date().toISOString();
+      if (correct) {
+        mathSession.correct += 1;
+        skillData.correct += 1;
+        skillData.streak += 1;
+        skillData.bestStreak = Math.max(skillData.bestStreak, skillData.streak);
+        els.mathFeedback.className = "feedback good";
+        els.mathFeedback.textContent = randomFrom(praise) + " " + mathSession.current.explanation;
+      } else {
+        skillData.streak = 0;
+        skillData.missed[mathSession.current.concept] = (skillData.missed[mathSession.current.concept] || 0) + 1;
+        els.mathFeedback.className = "feedback no";
+        els.mathFeedback.textContent = "Good try. The answer is " + mathSession.current.displayAnswer + ". " + mathSession.current.explanation;
+      }
+      adjustMathLevel(skillData);
+      mathSession.questionIndex += 1;
+      els.mathAnswer.readOnly = true;
+      els.checkMathBtn.classList.add("hidden");
+      els.nextMathBtn.classList.remove("hidden");
+      els.nextMathBtn.textContent = mathSession.questionIndex >= ACTIVITY_GOAL ? "Finish" : "Next";
+      updateMathSessionUi();
+      renderMath();
+      saveState();
+    }
+
+    function adjustMathLevel(skillData) {
+      const recentAccuracy = percent(skillData.correct, skillData.attempts);
+      if (skillData.attempts >= 4 && skillData.streak >= 3 && recentAccuracy >= 80) {
+        skillData.level = Math.min(5, skillData.level + 1);
+        skillData.streak = 0;
+      } else if (skillData.attempts >= 3 && recentAccuracy < 55) {
+        skillData.level = Math.max(1, skillData.level - 1);
+      }
+    }
+
+    function finishMathActivity() {
+      const profile = getProfile();
+      const skillData = profile.math[mathSession.skillId];
+      const elapsed = Math.max(20, Math.round((Date.now() - mathSession.startedAt) / 1000));
+      skillData.activities += 1;
+      profile.activities.unshift({
+        type: "math",
+        skillId: mathSession.skillId,
+        skillTitle: mathSession.skill.title,
+        correct: mathSession.correct,
+        total: ACTIVITY_GOAL,
+        date: new Date().toISOString(),
+        seconds: elapsed
+      });
+      profile.activities = profile.activities.slice(0, 120);
+      els.mathFeedback.className = mathSession.correct >= 4 ? "feedback good" : "feedback try";
+      els.mathFeedback.textContent = `Activity complete: ${mathSession.correct}/${ACTIVITY_GOAL}. ${mathSession.correct >= 4 ? "You are ready for a bigger challenge." : "A little review will make this easier next time."}`;
+      els.mathProgressFill.style.width = "100%";
+      els.checkMathBtn.classList.add("hidden");
+      els.nextMathBtn.classList.add("hidden");
+      els.mathAnswer.readOnly = true;
+      mathSession = null;
+      saveState();
+      renderAll();
+    }
+
+    function generateMathQuestion(skillId, level) {
+      const generators = {
+        addSub: generateAddSub,
+        multDiv: generateMultDiv,
+        fractions: generateFractions,
+        decimals: generateDecimals,
+        wordProblems: generateWordProblems,
+        geometry: generateGeometry
+      };
+      return generators[skillId](level);
+    }
+
+    function generateAddSub(level) {
+      const digits = [2, 3, 4, 4, 5][level - 1];
+      const min = Math.pow(10, digits - 1);
+      const max = Math.pow(10, digits) - 1;
+      if (Math.random() < 0.5) {
+        const pair = makeCarryPair(digits);
+        const question = mathQuestion(`${pair.a.toLocaleString()} + ${pair.b.toLocaleString()} = ?`, pair.a + pair.b, "multi-digit addition", `Add by place value. When a column makes 10 or more, carry to the next column.`);
+        question.work = { kind: "stacked", top: pair.a, bottom: pair.b, op: "+" };
+        return question;
+      }
+      const pair = makeBorrowPair(min, max);
+      const question = mathQuestion(`${pair.big.toLocaleString()} - ${pair.small.toLocaleString()} = ?`, pair.big - pair.small, "multi-digit subtraction", `Subtract by place value. Borrow or regroup when the top digit is too small.`);
+      question.work = { kind: "stacked", top: pair.big, bottom: pair.small, op: "-" };
+      return question;
+    }
+
+    function makeCarryPair(digits) {
+      const min = Math.pow(10, digits - 1);
+      const max = Math.pow(10, digits) - 1;
+      for (let tries = 0; tries < 80; tries += 1) {
+        const a = rand(min, max);
+        const b = rand(min, max);
+        if (hasCarry(a, b)) return { a, b };
+      }
+      return { a: min + 68, b: min + 57 };
+    }
+
+    function makeBorrowPair(min, max) {
+      for (let tries = 0; tries < 80; tries += 1) {
+        const big = rand(min, max);
+        const small = rand(Math.floor(min / 2), big - 1);
+        if (hasBorrow(big, small)) return { big, small };
+      }
+      return { big: min + 42, small: Math.max(12, min + 13) };
+    }
+
+    function hasCarry(a, b) {
+      while (a || b) {
+        if ((a % 10) + (b % 10) >= 10) return true;
+        a = Math.floor(a / 10);
+        b = Math.floor(b / 10);
+      }
+      return false;
+    }
+
+    function hasBorrow(big, small) {
+      while (big || small) {
+        if ((big % 10) < (small % 10)) return true;
+        big = Math.floor(big / 10);
+        small = Math.floor(small / 10);
+      }
+      return false;
+    }
+
+    function generateMultDiv(level) {
+      if (Math.random() < 0.55) {
+        const aMax = [10, 12, 20, 45, 99][level - 1];
+        const bMax = [10, 10, 12, 15, 25][level - 1];
+        const a = rand(2, aMax);
+        const b = rand(2, bMax);
+        return mathQuestion(`${a} × ${b} = ?`, a * b, "multiplication", `Break one factor apart, multiply each part, then add.`);
+      }
+      const divisor = rand(2, [10, 10, 12, 15, 20][level - 1]);
+      const quotient = rand(2, [10, 12, 20, 45, 80][level - 1]);
+      const dividend = divisor * quotient;
+      return mathQuestion(`${dividend} ÷ ${divisor} = ?`, quotient, "division", `Division asks how many equal groups of ${divisor} fit into ${dividend}.`);
+    }
+
+    function generateFractions(level) {
+      const denominators = [4, 6, 8, 10, 12];
+      const den = denominators[rand(0, Math.min(level, denominators.length - 1))];
+      if (level <= 2 || Math.random() < 0.35) {
+        const num = rand(1, den - 1);
+        const factor = rand(2, 5);
+        const targetDen = den * factor;
+        const targetNum = num * factor;
+        return {
+          prompt: `Complete the equivalent fraction:\n${num}/${den} = ?/${targetDen}`,
+          answer: `${targetNum}/${targetDen}`,
+          displayAnswer: `${targetNum}/${targetDen}`,
+          type: "fractionExact",
+          concept: "equivalent fractions",
+          explanation: `Multiply the numerator and denominator by ${factor} to make an equivalent fraction.`
+        };
+      }
+      const num1 = rand(1, Math.floor(den / 2));
+      const num2 = rand(1, Math.floor(den / 2));
+      return {
+        prompt: `${num1}/${den} + ${num2}/${den} = ?`,
+        answer: (num1 + num2) / den,
+        displayAnswer: simplifyFraction(num1 + num2, den),
+        type: "fraction",
+        concept: "adding fractions",
+        explanation: `When denominators match, add the numerators and keep the denominator.`
+      };
+    }
+
+    function generateDecimals(level) {
+      const places = level <= 2 ? 1 : 2;
+      const scale = places === 1 ? 10 : 100;
+      const a = rand(12, 80 + level * 20) / scale;
+      const b = rand(5, 50 + level * 10) / scale;
+      if (Math.random() < 0.55) {
+        const answer = roundDecimal(a + b, places);
+        return mathQuestion(`${a.toFixed(places)} + ${b.toFixed(places)} = ?`, answer, "decimal addition", `Line up the decimal points before adding.`);
+      }
+      const answer = a > b ? roundDecimal(a - b, places) : roundDecimal(b - a, places);
+      return mathQuestion(`${Math.max(a, b).toFixed(places)} - ${Math.min(a, b).toFixed(places)} = ?`, answer, "decimal subtraction", `Line up decimal points and subtract place by place.`);
+    }
+
+    function generateWordProblems(level) {
+      const scenarios = [
+        () => {
+          const boxes = rand(2, 5 + level);
+          const each = rand(6, 10 + level * 4);
+          const question = mathQuestion(`A class packs ${boxes} boxes with ${each} pencils in each box. How many pencils are packed?`, boxes * each, "multiplication word problems", `Multiply the number of boxes by the number in each box.`);
+          question.work = { kind: "scratch" };
+          return question;
+        },
+        () => {
+          const start = rand(90, 350 + level * 180);
+          const used = rand(30, Math.floor(start * 0.75));
+          const question = mathQuestion(`The library had ${start} bookmarks. Students used ${used}. How many bookmarks are left?`, start - used, "subtraction word problems", `Left means subtract the amount used from the starting amount.`);
+          question.work = { kind: "stacked", top: start, bottom: used, op: "-" };
+          return question;
+        },
+        () => {
+          const groups = rand(2, 5 + level);
+          const each = rand(4, 10 + level * 3);
+          const total = groups * each;
+          const question = mathQuestion(`${total} stickers are shared equally among ${groups} students. How many stickers does each student get?`, each, "division word problems", `Shared equally points to division.`);
+          question.work = { kind: "scratch" };
+          return question;
+        }
+      ];
+      return randomFrom(scenarios)();
+    }
+
+    function generateGeometry(level) {
+      if (Math.random() < 0.45) {
+        const length = rand(5, 12 + level * 4);
+        const width = rand(3, 9 + level * 2);
+        return mathQuestion(`A rectangle is ${length} units long and ${width} units wide. What is its area?`, length * width, "area", `Area of a rectangle is length times width.`);
+      }
+      if (Math.random() < 0.72) {
+        const length = rand(5, 15 + level * 3);
+        const width = rand(3, 11 + level * 2);
+        return mathQuestion(`A rectangle is ${length} feet long and ${width} feet wide. What is its perimeter?`, 2 * (length + width), "perimeter", `Perimeter is the distance around: add all sides.`);
+      }
+      const inches = rand(2, 6 + level) * 12;
+      return mathQuestion(`${inches} inches = ? feet`, inches / 12, "measurement conversion", `There are 12 inches in 1 foot.`);
+    }
+
+    function mathQuestion(prompt, answer, concept, explanation) {
+      return {
+        prompt,
+        answer,
+        displayAnswer: String(answer),
+        type: Number.isInteger(answer) ? "number" : "decimal",
+        concept,
+        explanation
+      };
+    }
+
+    function isAnswerCorrect(userAnswer, answer, type) {
+      const cleaned = userAnswer.toLowerCase().replace(/,/g, "").trim();
+      if (type === "fraction") {
+        const numeric = parseFraction(cleaned);
+        return numeric !== null && Math.abs(numeric - answer) < 0.001;
+      }
+      if (type === "fractionExact") {
+        return normalizeFractionText(cleaned) === normalizeFractionText(String(answer));
+      }
+      const numericAnswer = Number(cleaned);
+      return !Number.isNaN(numericAnswer) && Math.abs(numericAnswer - Number(answer)) < 0.01;
+    }
+
+    function normalizeFractionText(value) {
+      return value.replace(/\s+/g, "");
+    }
+
+    function parseFraction(value) {
+      if (value.includes("/")) {
+        const parts = value.split("/");
+        if (parts.length !== 2) return null;
+        const top = Number(parts[0].trim());
+        const bottom = Number(parts[1].trim());
+        if (!bottom || Number.isNaN(top) || Number.isNaN(bottom)) return null;
+        return top / bottom;
+      }
+      const asNumber = Number(value);
+      return Number.isNaN(asNumber) ? null : asNumber;
+    }
+
+    function simplifyFraction(num, den) {
+      const g = gcd(num, den);
+      return (num / g) + "/" + (den / g);
+    }
+
+    function gcd(a, b) {
+      while (b) {
+        const temp = b;
+        b = a % b;
+        a = temp;
+      }
+      return a;
+    }
+
+    function roundDecimal(value, places) {
+      const scale = Math.pow(10, places);
+      return Math.round(value * scale) / scale;
+    }
+
+    function rand(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function randomFrom(list) {
+      return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function renderWriting() {
+      const profile = getProfile();
+      els.writingCountTag.textContent = profile.writingHistory.length + " pieces saved";
+      els.writingSkillCards.innerHTML = writingSkills.map((skill) => {
+        const data = profile.writing[skill.id];
+        return `
+          <article class="skill-card write">
+            <div>
+              <div class="stat-row"><span class="tag violet">${skill.icon}</span><span class="tag green">${data.pieces} saved</span></div>
+              <h3>${skill.title}</h3>
+              <p class="small">${skill.description}</p>
+            </div>
+            <button class="btn primary" type="button" onclick="startWritingPractice('${skill.id}')">Start</button>
+          </article>
+        `;
+      }).join("");
+    }
+
+    function startWritingPractice(skillId) {
+      const skill = writingSkills.find((item) => item.id === skillId);
+      if (!skill) return;
+      showView("writing");
+      const promptData = randomFrom(writingPrompts[skillId]);
+      writingSession = {
+        skillId,
+        skill,
+        promptData,
+        prompt: typeof promptData === "string" ? promptData : promptData.text,
+        startedAt: Date.now(),
+        checked: false,
+        saved: false
+      };
+      els.writingPracticePanel.classList.remove("hidden");
+      els.writingPracticeTitle.textContent = skill.title;
+      els.writingPracticeSub.textContent = skill.description;
+      els.writingPrompt.textContent = writingSession.prompt;
+      els.writingResponse.value = "";
+      els.saveWritingBtn.disabled = false;
+      els.saveWritingBtn.textContent = skillId === "sentenceCorrection" ? "Check Answer" : "Save Writing";
+      els.writingGoalTag.textContent = "Goal: " + skill.goal;
+      renderWritingChecklist(skillId);
+      updateWritingCoach();
+      els.writingResponse.focus();
+      els.writingPracticePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function renderWritingChecklist(skillId) {
+      const checklists = {
+        sentenceCorrection: ["Capital letters are correct", "Punctuation is correct", "The sentence sounds complete"],
+        paragraph: ["Clear topic sentence", "At least 3 supporting details", "Ending sentence wraps it up"],
+        opinion: ["Opinion is stated clearly", "At least 2 reasons are included", "Ending reminds the reader of your opinion"],
+        narrative: ["Characters and setting are clear", "Events happen in order", "Ending solves or reflects on the problem"],
+        informational: ["Topic is introduced", "Facts and examples teach the reader", "Ideas are grouped in a clear order"],
+        vocabulary: ["Plain words are replaced", "New words fit the meaning", "The sentence still sounds natural"]
+      };
+      els.writingChecklist.innerHTML = checklists[skillId].map((item) => `
+        <label class="check-item"><input type="checkbox" /> <span>${item}</span></label>
+      `).join("");
+    }
+
+    function updateWritingCoach() {
+      const text = els.writingResponse.value.trim();
+      const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+      const sentences = text ? (text.match(/[.!?]+/g) || []).length : 0;
+      els.wordCountTag.textContent = words + " words";
+      els.sentenceCountTag.textContent = sentences + " sentences";
+      if (writingSession) {
+        writingSession.checked = false;
+        if (!writingSession.saved) {
+          els.saveWritingBtn.disabled = false;
+          els.saveWritingBtn.textContent = writingSession.skillId === "sentenceCorrection" ? "Check Answer" : "Save Writing";
+        }
+      }
+      let message = "Start with your main idea, then add details.";
+      let className = "feedback";
+      if (writingSession && writingSession.skillId === "sentenceCorrection") {
+        message = "Fix every issue you can find, then check your correction.";
+        if (text) {
+          message = "Good. Check capitals, punctuation, verb tense, and word order before submitting.";
+          className = "feedback try";
+        }
+        els.writingFeedback.className = className;
+        els.writingFeedback.textContent = message;
+        return;
+      }
+      if (words >= 80 || sentences >= 6) {
+        message = "This has strong length. Now check for clear order, vivid words, and punctuation.";
+        className = "feedback good";
+      } else if (words >= 35 || sentences >= 3) {
+        message = "Good start. Add one more specific detail or example to make it stronger.";
+        className = "feedback try";
+      } else if (words > 0) {
+        message = "Nice opening. Keep going with details, reasons, or action.";
+        className = "feedback try";
+      }
+      if (/\b(good|bad|nice|thing|stuff|went)\b/i.test(text)) {
+        message += " Try replacing a plain word with something more exact.";
+      }
+      els.writingFeedback.className = className;
+      els.writingFeedback.textContent = message;
+    }
+
+    function saveWriting() {
+      if (!writingSession) return;
+      if (writingSession.saved) {
+        els.writingFeedback.className = "feedback good";
+        els.writingFeedback.textContent = "This response is already saved. Choose New Prompt to practice again.";
+        return;
+      }
+      const text = els.writingResponse.value.trim();
+      if (writingSession.skillId === "sentenceCorrection") {
+        const result = evaluateSentenceCorrection(text, writingSession.promptData);
+        renderCorrectionChecklist(result);
+        if (!result.pass) {
+          els.writingFeedback.className = "feedback no";
+          els.writingFeedback.textContent = result.message;
+          return;
+        }
+        if (!writingSession.checked) {
+          writingSession.checked = true;
+          els.saveWritingBtn.textContent = "Save Correction";
+          els.writingFeedback.className = "feedback good";
+          els.writingFeedback.textContent = result.message + " Click Save Correction to add it to your history.";
+          return;
+        }
+      } else {
+        const result = evaluateWritingQuality(text, writingSession.skillId);
+        if (!result.pass) {
+          els.writingFeedback.className = "feedback no";
+          els.writingFeedback.textContent = result.message;
+          return;
+        }
+        els.writingFeedback.className = "feedback good";
+        els.writingFeedback.textContent = result.message;
+      }
+      if (text.length < 20) {
+        els.writingFeedback.className = "feedback no";
+        els.writingFeedback.textContent = "Write a little more before saving so your progress report has something useful.";
+        return;
+      }
+      const profile = getProfile();
+      const words = text.split(/\s+/).filter(Boolean).length;
+      const sentences = (text.match(/[.!?]+/g) || []).length;
+      const elapsed = Math.max(20, Math.round((Date.now() - writingSession.startedAt) / 1000));
+      profile.writing[writingSession.skillId].pieces += 1;
+      profile.writing[writingSession.skillId].words += words;
+      profile.writing[writingSession.skillId].lastPracticed = new Date().toISOString();
+      profile.writingHistory.unshift({
+        id: makeId(),
+        skillId: writingSession.skillId,
+        skillTitle: writingSession.skill.title,
+        prompt: writingSession.prompt,
+        response: text,
+        words,
+        sentences,
+        date: new Date().toISOString(),
+        seconds: elapsed
+      });
+      profile.writingHistory = profile.writingHistory.slice(0, 80);
+      profile.activities.unshift({
+        type: "writing",
+        skillId: writingSession.skillId,
+        skillTitle: writingSession.skill.title,
+        date: new Date().toISOString(),
+        seconds: elapsed,
+        words
+      });
+      profile.activities = profile.activities.slice(0, 120);
+      els.writingFeedback.className = "feedback good";
+      els.writingFeedback.textContent = "Saved! Your writing history now has this piece.";
+      writingSession.saved = true;
+      els.saveWritingBtn.disabled = true;
+      els.saveWritingBtn.textContent = "Saved";
+      saveState();
+      renderAll();
+    }
+
+    function evaluateSentenceCorrection(text, promptData) {
+      if (!text) {
+        return { pass: false, found: [], missing: promptData.issues, message: "Type your corrected sentence first." };
+      }
+      const expected = normalizeSentence(promptData.answer);
+      const actual = normalizeSentence(text);
+      const found = promptData.issues.filter((issue) => sentenceIssueFound(issue, text, actual));
+      const missing = promptData.issues.filter((issue) => !found.includes(issue));
+      const pass = actual === expected || found.length >= Math.max(3, promptData.issues.length - 1);
+      return {
+        pass,
+        found,
+        missing,
+        message: pass
+          ? `Nice correction. Found ${found.length}/${promptData.issues.length} issue areas. Model answer: ${promptData.answer}`
+          : `You found ${found.length}/${promptData.issues.length} issue areas. Still check: ${missing.slice(0, 3).join(", ")}.`
+      };
+    }
+
+    function normalizeSentence(value) {
+      return value.toLowerCase().replace(/[“”]/g, '"').replace(/[‘’]/g, "'").replace(/[^a-z0-9"'\s]/g, "").replace(/\s+/g, " ").trim();
+    }
+
+    function sentenceIssueFound(issue, rawText, normalized) {
+      const text = rawText.trim();
+      if (/Capitalized/.test(issue)) return /^[A-Z"I]/.test(text) && !/\bi\b/.test(text);
+      if (/punctuation|question mark|ending/.test(issue)) return /[.!?]"?$/.test(text);
+      if (/comma/.test(issue)) return text.includes(",");
+      if (/quotation/.test(issue)) return text.includes('"');
+      if (/my friend and I/.test(issue)) return /my friend and i/.test(normalized);
+      if (/seen to saw/.test(issue)) return /\bsaw\b/.test(normalized);
+      if (/dont/.test(issue)) return /doesn't|does not/.test(normalized);
+      if (/goed to went/.test(issue)) return /\bwent\b/.test(normalized);
+      if (/plays to played/.test(issue)) return /\bplayed\b/.test(normalized);
+      if (/was to were/.test(issue)) return /\bwere\b/.test(normalized);
+      if (/is to are/.test(issue)) return /\bare\b/.test(normalized);
+      if (/proper nouns|speaker/.test(issue)) return /\b[A-Z][a-z]+\b/.test(rawText);
+      return true;
+    }
+
+    function renderCorrectionChecklist(result) {
+      els.writingChecklist.innerHTML = result.found.map((item) => `
+        <div class="check-item found"><input type="checkbox" checked disabled /> <span>${item}</span></div>
+      `).concat(result.missing.map((item) => `
+        <div class="check-item missing"><input type="checkbox" disabled /> <span>${item}</span></div>
+      `)).join("");
+    }
+
+    function evaluateWritingQuality(text, skillId) {
+      const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+      const sentences = text ? (text.match(/[.!?]+/g) || []).length : 0;
+      const lower = text.toLowerCase();
+      const hasBecause = /\bbecause\b|\bfor example\b|\bfor instance\b|\bone reason\b/.test(lower);
+      const hasOrder = /\bfirst\b|\bnext\b|\bthen\b|\bfinally\b|\bin addition\b|\balso\b/.test(lower);
+      const plainWords = (lower.match(/\b(good|bad|nice|thing|stuff|went|big|pretty|happy)\b/g) || []).length;
+      const vividWords = (lower.match(/\b(enormous|sprinted|dashed|delicious|comfortable|gloomy|thrilled|sparkling|stomped|drifted|soared|whispered|crashed|brilliant|carefully|nervously)\b/g) || []).length;
+      if (skillId === "informational") {
+        if (sentences < 4 || words < 55) return { pass: false, message: "Add more teaching: aim for at least 4 sentences and 55 words." };
+        if (!hasOrder) return { pass: false, message: "Add order words like first, next, also, or finally so the explanation is easier to follow." };
+        if (!hasBecause) return { pass: false, message: "Add facts or examples with phrases like for example, because, or one reason." };
+      } else if (skillId === "vocabulary") {
+        if (words < 8) return { pass: false, message: "Write a complete improved sentence before saving." };
+        if (plainWords > 0 && vividWords < 2) return { pass: false, message: "Try replacing at least two plain words with more exact or vivid words." };
+      } else if (skillId === "opinion") {
+        if (sentences < 4 || !hasBecause) return { pass: false, message: "State your opinion and add at least two reasons or examples." };
+      } else if (skillId === "narrative") {
+        if (sentences < 5 || !/\bthen\b|\bsuddenly\b|\bafter\b|\bfinally\b/.test(lower)) return { pass: false, message: "Add story sequence and a clear beginning, middle, and ending." };
+      } else if (sentences < 4 || words < 45) {
+        return { pass: false, message: "Build this into a fuller paragraph with at least 4 sentences and specific details." };
+      }
+      if (plainWords >= 3) return { pass: false, message: "A few words are still plain. Replace words like good, bad, nice, thing, stuff, went, big, or pretty." };
+      return { pass: true, message: "This is ready to save. It has enough detail for a useful progress record." };
+    }
+
+    function renderDashboard() {
+      const profile = getProfile();
+      const totals = getTotals(profile);
+      els.dashMetrics.innerHTML = [
+        metric("Total time", formatMinutes(profile.timeSpentSeconds), "Saved in this browser"),
+        metric("Math answers", totals.mathAttempts, totals.mathCorrect + " correct"),
+        metric("Writing words", profile.writingHistory.reduce((sum, item) => sum + item.words, 0), "Across saved pieces"),
+        metric("Activities", totals.activities, "Math and writing")
+      ].join("");
+      renderMathAccuracyTable(profile);
+      renderWritingHistory(profile);
+      renderStrengthsNeeds(profile);
+    }
+
+    function renderMathAccuracyTable(profile) {
+      const rows = mathSkills.map((skill) => {
+        const data = profile.math[skill.id];
+        const missed = Object.entries(data.missed || {}).sort((a, b) => b[1] - a[1]).slice(0, 2).map(([name]) => name).join(", ") || "None yet";
+        return `<tr><td><strong>${skill.title}</strong></td><td>${data.attempts}</td><td>${percent(data.correct, data.attempts)}%</td><td>Level ${data.level}</td><td>${missed}</td></tr>`;
+      }).join("");
+      els.mathAccuracyTable.innerHTML = `
+        <table>
+          <thead><tr><th>Skill</th><th>Attempts</th><th>Accuracy</th><th>Level</th><th>Missed concepts</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      `;
+    }
+
+    function renderWritingHistory(profile) {
+      if (!profile.writingHistory.length) {
+        els.writingHistory.innerHTML = `<div class="empty">No writing saved yet. Try one prompt in the Writing Studio.</div>`;
+        return;
+      }
+      els.writingHistory.innerHTML = profile.writingHistory.slice(0, 8).map((item) => `
+        <div class="list-item">
+          <div class="stat-row">
+            <span class="tag violet">${item.skillTitle}</span>
+            <span class="tag">${new Date(item.date).toLocaleDateString()}</span>
+            <span class="tag green">${item.words} words</span>
+          </div>
+          <p><strong>Prompt:</strong> ${escapeHtml(item.prompt)}</p>
+          <p class="small">${escapeHtml(item.response.slice(0, 220))}${item.response.length > 220 ? "..." : ""}</p>
+        </div>
+      `).join("");
+    }
+
+    function renderStrengthsNeeds(profile) {
+      const mathRows = mathSkills.map((skill) => {
+        const data = profile.math[skill.id];
+        return { title: skill.title, attempts: data.attempts, accuracy: percent(data.correct, data.attempts), type: "Math" };
+      });
+      const strengths = mathRows.filter((row) => row.attempts >= 4 && row.accuracy >= 80).slice(0, 3);
+      const needs = mathRows.filter((row) => row.attempts < 4 || row.accuracy < 70).slice(0, 3);
+      const writingDone = writingSkills.filter((skill) => profile.writing[skill.id].pieces > 0).map((skill) => skill.title).slice(0, 3);
+      els.strengthsNeeds.innerHTML = [
+        infoCard("Strengths", strengths.length ? strengths.map((row) => `${row.title}: ${row.accuracy}%`).join("<br>") : "Keep practicing to reveal strengths.", "green"),
+        infoCard("Needs Practice", needs.length ? needs.map((row) => `${row.title}: ${row.attempts ? row.accuracy + "%" : "new"}`).join("<br>") : "No urgent math review areas right now.", "coral"),
+        infoCard("Writing Completed", writingDone.length ? writingDone.join("<br>") : "No writing categories completed yet.", "violet"),
+        infoCard("Recommended Habit", "Try 10 minutes of math plus one short writing prompt, 3 days each week.", "yellow")
+      ].join("");
+    }
+
+    function infoCard(title, body, color) {
+      return `<article class="skill-card"><div><span class="tag ${color}">${title}</span><p class="small" style="margin-top:10px;">${body}</p></div></article>`;
+    }
+
+    function renderParent() {
+      els.parentEmail.value = state.parentEmail || "";
+      els.parentGate.classList.toggle("hidden", parentUnlocked);
+      els.parentPanel.classList.toggle("hidden", !parentUnlocked);
+      if (parentUnlocked && !els.emailPreview.value) {
+        els.emailPreview.value = generateEmailSummary();
+      }
+    }
+
+    function generateEmailSummary() {
+      const profile = getProfile();
+      const summaryType = els.summaryType.value || "session";
+      const since = summaryType === "weekly"
+        ? Date.now() - 7 * 24 * 60 * 60 * 1000
+        : summaryType === "session"
+          ? sessionStart
+          : 0;
+      const activities = profile.activities.filter((item) => new Date(item.date).getTime() >= since);
+      const writing = profile.writingHistory.filter((item) => new Date(item.date).getTime() >= since);
+      const mathActivities = activities.filter((item) => item.type === "math");
+      const mathCorrect = mathActivities.reduce((sum, item) => sum + (item.correct || 0), 0);
+      const mathTotal = mathActivities.reduce((sum, item) => sum + (item.total || 0), 0);
+      const practicedSkills = [...new Set(activities.map((item) => item.skillTitle))];
+      const struggles = findWeakAreas(profile).slice(0, 4);
+      const strengths = findStrengths(profile).slice(0, 4);
+      const improvements = strengths.length
+        ? strengths.map((item) => item.title + " is at " + item.accuracy + "% accuracy").join("; ")
+        : "Strengths will appear after more practice.";
+      const nextSteps = struggles.length
+        ? struggles.map((item) => "Practice " + item.title + " with short review sets").join("; ")
+        : "Continue balanced practice across math and writing.";
+
+      return [
+        `To: ${state.parentEmail || "[enter parent email]"}`,
+        `Subject: ${profile.name}'s Bright Steps Practice Summary`,
+        "",
+        `Student: ${profile.name}`,
+        `Summary range: ${summaryType === "weekly" ? "Last 7 days" : summaryType === "session" ? "This browser session" : "All saved progress"}`,
+        `Generated: ${new Date().toLocaleString()}`,
+        "",
+        "Math:",
+        `- Accuracy in this range: ${mathTotal ? percent(mathCorrect, mathTotal) + "%" : "No math activities in this range"}`,
+        `- Skills practiced: ${practicedSkills.length ? practicedSkills.join(", ") : "None yet"}`,
+        `- Current overall math accuracy: ${getTotals(profile).mathAccuracy}%`,
+        "",
+        "Writing:",
+        `- Writing pieces completed: ${writing.length}`,
+        `- Prompts completed: ${writing.map((item) => item.skillTitle).join(", ") || "None yet"}`,
+        `- Total saved writing pieces: ${profile.writingHistory.length}`,
+        "",
+        "Strengths and improvements:",
+        `- ${improvements}`,
+        "",
+        "Struggles or areas needing practice:",
+        `- ${struggles.length ? struggles.map((item) => item.title + " (" + item.note + ")").join("; ") : "No clear struggle areas yet"}`,
+        "",
+        "Recommended next steps:",
+        `- ${nextSteps}`,
+        "- Keep sessions short and upbeat: about 10-15 minutes is enough for a strong habit.",
+        "",
+        "This summary was generated locally by the standalone Bright Steps Practice HTML app."
+      ].join("\n");
+    }
+
+    function findWeakAreas(profile) {
+      return mathSkills.map((skill) => {
+        const data = profile.math[skill.id];
+        const accuracy = percent(data.correct, data.attempts);
+        return {
+          title: skill.title,
+          accuracy,
+          attempts: data.attempts,
+          note: data.attempts ? accuracy + "% accuracy" : "not practiced yet"
+        };
+      }).filter((item) => item.attempts < 5 || item.accuracy < 75)
+        .sort((a, b) => a.accuracy - b.accuracy || a.attempts - b.attempts);
+    }
+
+    function findStrengths(profile) {
+      return mathSkills.map((skill) => {
+        const data = profile.math[skill.id];
+        return {
+          title: skill.title,
+          accuracy: percent(data.correct, data.attempts),
+          attempts: data.attempts
+        };
+      }).filter((item) => item.attempts >= 4 && item.accuracy >= 80)
+        .sort((a, b) => b.accuracy - a.accuracy);
+    }
+
+    function showView(view) {
+      activeView = view;
+      Object.entries(els.views).forEach(([key, element]) => {
+        element.classList.toggle("active", key === view);
+      });
+      els.navButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.view === view);
+      });
+      if (view === "dashboard") renderDashboard();
+      if (view === "parent") renderParent();
+      if (view === "home") renderHome();
+    }
+
+    function openProfileModal() {
+      els.profileModal.classList.add("open");
+      els.newProfileName.value = "";
+      els.newProfileName.focus();
+    }
+
+    function closeProfileModal() {
+      els.profileModal.classList.remove("open");
+    }
+
+    function saveNewProfile() {
+      const name = els.newProfileName.value.trim() || "Student";
+      const profile = createProfile(name);
+      state.profiles[profile.id] = profile;
+      currentProfileId = profile.id;
+      state.currentProfileId = profile.id;
+      closeProfileModal();
+      saveState();
+      renderAll();
+    }
+
+    function resetStudent() {
+      const profile = getProfile();
+      if (!confirm("Reset all saved progress for " + profile.name + "?")) return;
+      const fresh = createProfile(profile.name);
+      fresh.id = profile.id;
+      state.profiles[profile.id] = fresh;
+      saveState();
+      els.emailPreview.value = "";
+      renderAll();
+    }
+
+    function resetAll() {
+      if (!confirm("Reset every student profile and parent setting?")) return;
+      state = defaultState();
+      currentProfileId = state.currentProfileId;
+      parentUnlocked = false;
+      mathSession = null;
+      writingSession = null;
+      sessionStart = Date.now();
+      saveState();
+      els.emailPreview.value = "";
+      renderAll();
+      showView("home");
+    }
+
+    function bindEvents() {
+      els.addProfileBtn.addEventListener("click", openProfileModal);
+      els.cancelProfileBtn.addEventListener("click", closeProfileModal);
+      els.saveProfileBtn.addEventListener("click", saveNewProfile);
+      els.newProfileName.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") saveNewProfile();
+        if (event.key === "Escape") closeProfileModal();
+      });
+      els.profileModal.addEventListener("click", (event) => {
+        if (event.target === els.profileModal) closeProfileModal();
+      });
+      els.profileSelect.addEventListener("change", () => {
+        currentProfileId = els.profileSelect.value;
+        state.currentProfileId = currentProfileId;
+        mathSession = null;
+        writingSession = null;
+        els.mathPracticePanel.classList.add("hidden");
+        els.writingPracticePanel.classList.add("hidden");
+        els.emailPreview.value = "";
+        saveState();
+        renderAll();
+      });
+      els.navButtons.forEach((button) => {
+        button.addEventListener("click", () => showView(button.dataset.view));
+      });
+      els.checkMathBtn.addEventListener("click", checkMathAnswer);
+      els.nextMathBtn.addEventListener("click", nextMathQuestion);
+      els.endMathBtn.addEventListener("click", () => {
+        mathSession = null;
+        els.mathPracticePanel.classList.add("hidden");
+      });
+      els.mathAnswer.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          if (mathSession && mathSession.answered) nextMathQuestion();
+          else checkMathAnswer();
+        }
+      });
+      els.dadLevelDownBtn.addEventListener("click", () => changeDadLevel(-1));
+      els.dadLevelUpBtn.addEventListener("click", () => changeDadLevel(1));
+      els.dadNewQuestionBtn.addEventListener("click", () => {
+        if (mathSession && isDadMode()) nextMathQuestion();
+      });
+      els.writingResponse.addEventListener("input", updateWritingCoach);
+      els.saveWritingBtn.addEventListener("click", saveWriting);
+      els.newPromptBtn.addEventListener("click", () => {
+        if (writingSession) startWritingPractice(writingSession.skillId);
+      });
+      els.endWritingBtn.addEventListener("click", () => {
+        writingSession = null;
+        els.writingPracticePanel.classList.add("hidden");
+      });
+      els.unlockParentBtn.addEventListener("click", () => {
+        if (els.pinInput.value === state.parentPin) {
+          parentUnlocked = true;
+          els.pinInput.value = "";
+          renderParent();
+        } else {
+          alert("That PIN did not match. The default is 1234 unless changed in the code.");
+        }
+      });
+      els.lockParentBtn.addEventListener("click", () => {
+        parentUnlocked = false;
+        renderParent();
+      });
+      els.parentEmail.addEventListener("input", () => {
+        state.parentEmail = els.parentEmail.value.trim();
+        saveState();
+      });
+      els.summaryType.addEventListener("change", () => {
+        els.emailPreview.value = generateEmailSummary();
+      });
+      els.generateEmailBtn.addEventListener("click", () => {
+        state.parentEmail = els.parentEmail.value.trim();
+        saveState();
+        els.emailPreview.value = generateEmailSummary();
+      });
+      els.copyEmailBtn.addEventListener("click", async () => {
+        if (!els.emailPreview.value) els.emailPreview.value = generateEmailSummary();
+        try {
+          await navigator.clipboard.writeText(els.emailPreview.value);
+          alert("Summary copied.");
+        } catch (error) {
+          els.emailPreview.select();
+          document.execCommand("copy");
+          alert("Summary selected and copied.");
+        }
+      });
+      els.resetStudentBtn.addEventListener("click", resetStudent);
+      els.resetAllBtn.addEventListener("click", resetAll);
+    }
+
+    /*
+      emailIntegrationExample:
+      A standalone HTML file cannot safely send email directly because API keys and SMTP
+      credentials would be visible to anyone who opens the file. The built-in approach
+      above generates a ready-to-copy parent summary.
+
+      To send automatically later, add a browser email provider such as EmailJS:
+        1. Create an EmailJS account and template.
+        2. Load their SDK script.
+        3. Replace the copy button behavior with emailjs.send(serviceId, templateId, {
+             to_email: state.parentEmail,
+             student_name: getProfile().name,
+             summary: generateEmailSummary()
+           });
+
+      A more secure production option is a tiny backend endpoint:
+        fetch("/api/send-summary", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ to: state.parentEmail, summary: generateEmailSummary() })
+        });
+      The backend would keep the real email credentials private.
+    */
+
+    bindEvents();
+    renderAll();
+    setInterval(() => {
+      addTime(15);
+      if (activeView === "home") renderHome();
+    }, 15000);
+  </script>
+</body>
+</html>
