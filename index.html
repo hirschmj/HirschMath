@@ -1010,8 +1010,31 @@
               </label>
             </div>
 
+            <div class="settings-row">
+              <label>
+                EmailJS public key
+                <input id="emailJsPublicKey" class="field" type="text" placeholder="public key from EmailJS" />
+              </label>
+              <label>
+                EmailJS service ID
+                <input id="emailJsServiceId" class="field" type="text" placeholder="service_xxxxxxx" />
+              </label>
+            </div>
+
+            <div class="settings-row">
+              <label>
+                EmailJS template ID
+                <input id="emailJsTemplateId" class="field" type="text" placeholder="template_xxxxxxx" />
+              </label>
+              <label>
+                Site URL
+                <input id="siteUrl" class="field" type="url" placeholder="https://hirschmj.github.io/HirschMath/" />
+              </label>
+            </div>
+
             <div class="stat-row" style="margin-bottom: 12px;">
               <button class="btn primary" id="generateEmailBtn" type="button">Generate Summary</button>
+              <button class="btn green" id="sendEmailBtn" type="button">Send Email</button>
               <button class="btn green" id="copyEmailBtn" type="button">Copy Summary</button>
               <button class="btn coral" id="resetStudentBtn" type="button">Reset This Student</button>
               <button class="btn coral" id="resetAllBtn" type="button">Reset All Data</button>
@@ -1020,7 +1043,7 @@
             <textarea id="emailPreview" class="email-preview" readonly></textarea>
 
             <p class="small" style="margin-top: 12px;">
-              Email limitation: this single HTML file cannot send mail securely by itself. To send automatically, connect an EmailJS account or a small backend in the commented JavaScript section named emailIntegrationExample.
+              Email sending uses EmailJS from the browser. Create an EmailJS template with variables named to_email, subject, student_name, summary, and site_url, then enter the IDs above.
             </p>
           </section>
         </div>
@@ -1140,44 +1163,112 @@
     const writingPrompts = {
       sentenceCorrection: [
         {
+          level: 1,
           text: "Correct this sentence: yesterday me and my friend seen a bright comet in the sky",
           answer: "Yesterday my friend and I saw a bright comet in the sky.",
           issues: ["Capitalized the first word", "Changed me and my friend to my friend and I", "Changed seen to saw", "Added ending punctuation"]
         },
         {
+          level: 1,
           text: "Correct this sentence: the puppy dont like when its bowl is empty",
           answer: "The puppy doesn't like when its bowl is empty.",
           issues: ["Capitalized the first word", "Changed dont to doesn't", "Used its correctly", "Added ending punctuation"]
         },
         {
+          level: 2,
           text: "Correct this sentence: my teacher said bring your notebook pencil and folder",
           answer: "My teacher said, \"Bring your notebook, pencil, and folder.\"",
           issues: ["Capitalized the first word", "Added comma before the quote", "Added quotation marks", "Added commas in a list", "Added ending punctuation"]
         },
         {
+          level: 1,
           text: "Correct this sentence: after school we goed to the park and plays soccer",
           answer: "After school, we went to the park and played soccer.",
           issues: ["Capitalized the first word", "Added comma after the opener", "Changed goed to went", "Changed plays to played", "Added ending punctuation"]
         },
         {
+          level: 1,
           text: "Correct this sentence: nina and marco was excited because they won the contest",
           answer: "Nina and Marco were excited because they won the contest.",
           issues: ["Capitalized proper nouns", "Changed was to were", "Added ending punctuation"]
         },
         {
+          level: 2,
           text: "Correct this sentence: can you help me find my red jacket asked liam",
           answer: "\"Can you help me find my red jacket?\" asked Liam.",
           issues: ["Added quotation marks", "Capitalized the first word", "Added a question mark", "Capitalized the speaker's name"]
         },
         {
+          level: 1,
           text: "Correct this sentence: the books is on the table next to the pencils",
           answer: "The books are on the table next to the pencils.",
           issues: ["Capitalized the first word", "Changed is to are", "Added ending punctuation"]
         },
         {
+          level: 1,
           text: "Correct this sentence: i packed a sandwich an apple and juice for lunch",
           answer: "I packed a sandwich, an apple, and juice for lunch.",
           issues: ["Capitalized I", "Added commas in a list", "Added ending punctuation"]
+        },
+        {
+          level: 1,
+          text: "Correct this sentence: we was late for music class",
+          answer: "We were late for music class.",
+          issues: ["Capitalized the first word", "Changed was to were", "Added ending punctuation"]
+        },
+        {
+          level: 1,
+          text: "Correct this sentence: my brother and me made pancakes",
+          answer: "My brother and I made pancakes.",
+          issues: ["Capitalized the first word", "Changed me to I", "Added ending punctuation"]
+        },
+        {
+          level: 1,
+          text: "Correct this sentence: the dog chased its ball under the porch",
+          answer: "The dog chased its ball under the porch.",
+          issues: ["Capitalized the first word", "Used its correctly", "Added ending punctuation"]
+        },
+        {
+          level: 1,
+          text: "Correct this sentence: sarah dont want to miss the bus",
+          answer: "Sarah doesn't want to miss the bus.",
+          issues: ["Capitalized the proper noun", "Changed dont to doesn't", "Added ending punctuation"]
+        },
+        {
+          level: 2,
+          text: "Correct this sentence: before dinner mom asked did you finish your reading log",
+          answer: "Before dinner, Mom asked, \"Did you finish your reading log?\"",
+          issues: ["Capitalized the first word", "Added comma after the opener", "Capitalized Mom", "Added comma before the quote", "Added quotation marks", "Added a question mark"]
+        },
+        {
+          level: 2,
+          text: "Correct this sentence: the hikers packed water snacks flashlights and jackets",
+          answer: "The hikers packed water, snacks, flashlights, and jackets.",
+          issues: ["Capitalized the first word", "Added commas in a list", "Added ending punctuation"]
+        },
+        {
+          level: 2,
+          text: "Correct this sentence: although the game was hard our team didnt give up",
+          answer: "Although the game was hard, our team didn't give up.",
+          issues: ["Capitalized the first word", "Added comma after the opener", "Changed didnt to didn't", "Added ending punctuation"]
+        },
+        {
+          level: 2,
+          text: "Correct this sentence: maya shouted look at the rainbow over the field",
+          answer: "Maya shouted, \"Look at the rainbow over the field!\"",
+          issues: ["Capitalized the speaker's name", "Added comma before the quote", "Added quotation marks", "Capitalized the quote", "Added ending punctuation"]
+        },
+        {
+          level: 2,
+          text: "Correct this sentence: the science project which took three weeks was finally finished",
+          answer: "The science project, which took three weeks, was finally finished.",
+          issues: ["Capitalized the first word", "Added commas around extra information", "Added ending punctuation"]
+        },
+        {
+          level: 2,
+          text: "Correct this sentence: when the bell rang we put away our notebooks pencils and folders",
+          answer: "When the bell rang, we put away our notebooks, pencils, and folders.",
+          issues: ["Capitalized the first word", "Added comma after the opener", "Added commas in a list", "Added ending punctuation"]
         }
       ],
       paragraph: [
@@ -1237,6 +1328,13 @@
     let mathSession = null;
     let writingSession = null;
     let sessionStart = Date.now();
+    let lastInteractionAt = Date.now();
+    let lessonBlockActiveSeconds = 0;
+    let lastActivityTickAt = Date.now();
+    let autoEmailInFlight = false;
+    const ACTIVE_GRACE_MS = 60000;
+    const AUTO_EMAIL_ACTIVE_SECONDS = 5 * 60;
+    const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
 
     const els = {
       profileSelect: document.getElementById("profileSelect"),
@@ -1304,8 +1402,13 @@
       unlockParentBtn: document.getElementById("unlockParentBtn"),
       lockParentBtn: document.getElementById("lockParentBtn"),
       parentEmail: document.getElementById("parentEmail"),
+      emailJsPublicKey: document.getElementById("emailJsPublicKey"),
+      emailJsServiceId: document.getElementById("emailJsServiceId"),
+      emailJsTemplateId: document.getElementById("emailJsTemplateId"),
+      siteUrl: document.getElementById("siteUrl"),
       summaryType: document.getElementById("summaryType"),
       generateEmailBtn: document.getElementById("generateEmailBtn"),
+      sendEmailBtn: document.getElementById("sendEmailBtn"),
       copyEmailBtn: document.getElementById("copyEmailBtn"),
       resetStudentBtn: document.getElementById("resetStudentBtn"),
       resetAllBtn: document.getElementById("resetAllBtn"),
@@ -1317,6 +1420,12 @@
       return {
         currentProfileId: firstProfile.id,
         parentEmail: "",
+        emailJs: {
+          publicKey: "",
+          serviceId: "",
+          templateId: ""
+        },
+        siteUrl: "https://hirschmj.github.io/HirschMath/",
         parentPin: "1234",
         profiles: {
           [firstProfile.id]: firstProfile
@@ -1381,6 +1490,8 @@
     function migrateState(saved) {
       saved.parentPin = saved.parentPin || "1234";
       saved.parentEmail = saved.parentEmail || "";
+      saved.emailJs = Object.assign({ publicKey: "", serviceId: "", templateId: "" }, saved.emailJs || {});
+      saved.siteUrl = saved.siteUrl || "https://hirschmj.github.io/HirschMath/";
       Object.values(saved.profiles).forEach((profile) => {
         profile.timeSpentSeconds = profile.timeSpentSeconds || 0;
         profile.todayKey = profile.todayKey || dayKey();
@@ -2016,7 +2127,7 @@
       const skill = writingSkills.find((item) => item.id === skillId);
       if (!skill) return;
       showView("writing");
-      const promptData = randomFrom(writingPrompts[skillId]);
+      const promptData = getWritingPrompt(skillId);
       writingSession = {
         skillId,
         skill,
@@ -2038,6 +2149,16 @@
       updateWritingCoach();
       els.writingResponse.focus();
       els.writingPracticePanel.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+
+    function getWritingPrompt(skillId) {
+      const prompts = writingPrompts[skillId];
+      if (skillId !== "sentenceCorrection") return randomFrom(prompts);
+      const profile = getProfile();
+      const pieces = profile.writing[skillId].pieces || 0;
+      const level = pieces >= 6 ? 2 : 1;
+      const levelPrompts = prompts.filter((prompt) => prompt.level === level);
+      return randomFrom(levelPrompts.length ? levelPrompts : prompts);
     }
 
     function renderWritingChecklist(skillId) {
@@ -2112,13 +2233,7 @@
           els.writingFeedback.textContent = result.message;
           return;
         }
-        if (!writingSession.checked) {
-          writingSession.checked = true;
-          els.saveWritingBtn.textContent = "Save Correction";
-          els.writingFeedback.className = "feedback good";
-          els.writingFeedback.textContent = result.message + " Click Save Correction to add it to your history.";
-          return;
-        }
+        writingSession.checked = true;
       } else {
         const result = evaluateWritingQuality(text, writingSession.skillId);
         if (!result.pass) {
@@ -2201,12 +2316,17 @@
       if (/comma/.test(issue)) return text.includes(",");
       if (/quotation/.test(issue)) return text.includes('"');
       if (/my friend and I/.test(issue)) return /my friend and i/.test(normalized);
+      if (/me to I/.test(issue)) return /\band i\b/.test(normalized);
       if (/seen to saw/.test(issue)) return /\bsaw\b/.test(normalized);
       if (/dont/.test(issue)) return /doesn't|does not/.test(normalized);
+      if (/didnt/.test(issue)) return /didn't|did not/.test(normalized);
       if (/goed to went/.test(issue)) return /\bwent\b/.test(normalized);
       if (/plays to played/.test(issue)) return /\bplayed\b/.test(normalized);
       if (/was to were/.test(issue)) return /\bwere\b/.test(normalized);
       if (/is to are/.test(issue)) return /\bare\b/.test(normalized);
+      if (/commas around extra information/.test(issue)) return (rawText.match(/,/g) || []).length >= 2;
+      if (/Capitalized the quote/.test(issue)) return /"[A-Z]/.test(rawText);
+      if (/Mom/.test(issue)) return /\bMom\b/.test(rawText);
       if (/proper nouns|speaker/.test(issue)) return /\b[A-Z][a-z]+\b/.test(rawText);
       return true;
     }
@@ -2313,6 +2433,10 @@
 
     function renderParent() {
       els.parentEmail.value = state.parentEmail || "";
+      els.emailJsPublicKey.value = state.emailJs.publicKey || "";
+      els.emailJsServiceId.value = state.emailJs.serviceId || "";
+      els.emailJsTemplateId.value = state.emailJs.templateId || "";
+      els.siteUrl.value = state.siteUrl || "https://hirschmj.github.io/HirschMath/";
       els.parentGate.classList.toggle("hidden", parentUnlocked);
       els.parentPanel.classList.toggle("hidden", !parentUnlocked);
       if (parentUnlocked && !els.emailPreview.value) {
@@ -2320,9 +2444,9 @@
       }
     }
 
-    function generateEmailSummary() {
+    function generateEmailSummary(summaryTypeOverride) {
       const profile = getProfile();
-      const summaryType = els.summaryType.value || "session";
+      const summaryType = summaryTypeOverride || els.summaryType.value || "session";
       const since = summaryType === "weekly"
         ? Date.now() - 7 * 24 * 60 * 60 * 1000
         : summaryType === "session"
@@ -2334,6 +2458,11 @@
       const mathCorrect = mathActivities.reduce((sum, item) => sum + (item.correct || 0), 0);
       const mathTotal = mathActivities.reduce((sum, item) => sum + (item.total || 0), 0);
       const practicedSkills = [...new Set(activities.map((item) => item.skillTitle))];
+      const todayActivities = profile.activities.filter((item) => new Date(item.date).toISOString().slice(0, 10) === dayKey());
+      const rangeMinutes = Math.round(activities.reduce((sum, item) => sum + (item.seconds || 0), 0) / 60);
+      const todayActivityMinutes = Math.round(todayActivities.reduce((sum, item) => sum + (item.seconds || 0), 0) / 60);
+      const todayTrackedMinutes = Math.max(Math.round((profile.todaySeconds || 0) / 60), todayActivityMinutes);
+      const totalTrackedMinutes = Math.max(Math.round((profile.timeSpentSeconds || 0) / 60), Math.round(profile.activities.reduce((sum, item) => sum + (item.seconds || 0), 0) / 60));
       const struggles = findWeakAreas(profile).slice(0, 4);
       const strengths = findStrengths(profile).slice(0, 4);
       const improvements = strengths.length
@@ -2350,6 +2479,12 @@
         `Student: ${profile.name}`,
         `Summary range: ${summaryType === "weekly" ? "Last 7 days" : summaryType === "session" ? "This browser session" : "All saved progress"}`,
         `Generated: ${new Date().toLocaleString()}`,
+        `Practice site: ${state.siteUrl || "https://hirschmj.github.io/HirschMath/"}`,
+        "",
+        "Time:",
+        `- Today: ${todayTrackedMinutes} minute(s)`,
+        `- This summary range: ${rangeMinutes} minute(s)`,
+        `- Total saved time: ${totalTrackedMinutes} minute(s)`,
         "",
         "Math:",
         `- Accuracy in this range: ${mathTotal ? percent(mathCorrect, mathTotal) + "%" : "No math activities in this range"}`,
@@ -2373,6 +2508,119 @@
         "",
         "This summary was generated locally by the standalone Bright Steps Practice HTML app."
       ].join("\n");
+    }
+
+    function saveEmailSettings() {
+      state.parentEmail = els.parentEmail.value.trim();
+      state.emailJs.publicKey = els.emailJsPublicKey.value.trim();
+      state.emailJs.serviceId = els.emailJsServiceId.value.trim();
+      state.emailJs.templateId = els.emailJsTemplateId.value.trim();
+      state.siteUrl = els.siteUrl.value.trim() || "https://hirschmj.github.io/HirschMath/";
+      saveState();
+    }
+
+    function loadEmailJsSdk() {
+      if (window.emailjs) return Promise.resolve(window.emailjs);
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector("script[data-emailjs-sdk]");
+        if (existing) {
+          existing.addEventListener("load", () => resolve(window.emailjs));
+          existing.addEventListener("error", reject);
+          return;
+        }
+        const script = document.createElement("script");
+        script.src = "https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js";
+        script.async = true;
+        script.dataset.emailjsSdk = "true";
+        script.onload = () => resolve(window.emailjs);
+        script.onerror = () => reject(new Error("EmailJS SDK could not be loaded."));
+        document.head.appendChild(script);
+      });
+    }
+
+    async function sendEmailSummary(options = {}) {
+      const silent = Boolean(options.silent);
+      const summaryType = options.summaryType || undefined;
+      if (!silent) saveEmailSettings();
+      if (!state.parentEmail) {
+        if (!silent) alert("Enter a parent email address first.");
+        return false;
+      }
+      if (!state.emailJs.publicKey || !state.emailJs.serviceId || !state.emailJs.templateId) {
+        if (!silent) alert("Enter the EmailJS public key, service ID, and template ID first.");
+        return false;
+      }
+      const profile = getProfile();
+      const subject = profile.name + "'s Bright Steps Practice Summary";
+      const summary = generateEmailSummary(summaryType);
+      els.emailPreview.value = summary;
+      if (!silent) {
+        els.sendEmailBtn.disabled = true;
+        els.sendEmailBtn.textContent = "Sending...";
+      }
+      try {
+        const emailjs = await loadEmailJsSdk();
+        emailjs.init({ publicKey: state.emailJs.publicKey });
+        await emailjs.send(state.emailJs.serviceId, state.emailJs.templateId, {
+          to_email: state.parentEmail,
+          subject,
+          student_name: profile.name,
+          summary,
+          site_url: state.siteUrl || "https://hirschmj.github.io/HirschMath/"
+        });
+        const status = options.auto ? "Auto email status: Sent after 5 active minutes and 5 idle minutes." : "Email status: Sent successfully.";
+        els.emailPreview.value = summary + "\n\n" + status;
+        if (!silent) alert("Summary email sent.");
+        return true;
+      } catch (error) {
+        els.emailPreview.value = summary + "\n\nEmail status: Could not send. Check EmailJS settings and template variables.";
+        if (!silent) alert("Email could not be sent. Check the EmailJS settings and template variables.");
+        return false;
+      } finally {
+        if (!silent) {
+          els.sendEmailBtn.disabled = false;
+          els.sendEmailBtn.textContent = "Send Email";
+        }
+      }
+    }
+
+    function markInteraction() {
+      lastInteractionAt = Date.now();
+    }
+
+    function hasEmailConfig() {
+      return Boolean(state.parentEmail && state.emailJs.publicKey && state.emailJs.serviceId && state.emailJs.templateId);
+    }
+
+    async function trackActivityAndMaybeEmail() {
+      const now = Date.now();
+      const elapsedSeconds = Math.max(1, Math.round((now - lastActivityTickAt) / 1000));
+      lastActivityTickAt = now;
+      const idleMs = now - lastInteractionAt;
+
+      if (idleMs <= ACTIVE_GRACE_MS) {
+        lessonBlockActiveSeconds += elapsedSeconds;
+        addTime(elapsedSeconds);
+        if (activeView === "home") renderHome();
+        return;
+      }
+
+      if (
+        lessonBlockActiveSeconds >= AUTO_EMAIL_ACTIVE_SECONDS &&
+        idleMs >= AUTO_EMAIL_IDLE_MS &&
+        !autoEmailInFlight
+      ) {
+        autoEmailInFlight = true;
+        const sent = hasEmailConfig()
+          ? await sendEmailSummary({ silent: true, auto: true, summaryType: "session" })
+          : false;
+        lessonBlockActiveSeconds = 0;
+        sessionStart = Date.now();
+        autoEmailInFlight = false;
+        if (!sent && parentUnlocked) {
+          els.emailPreview.value = generateEmailSummary("session") + "\n\nAuto email status: Ready, but EmailJS settings are incomplete or sending failed.";
+        }
+      }
     }
 
     function findWeakAreas(profile) {
@@ -2453,6 +2701,9 @@
       parentUnlocked = false;
       mathSession = null;
       writingSession = null;
+      lessonBlockActiveSeconds = 0;
+      lastInteractionAt = Date.now();
+      lastActivityTickAt = Date.now();
       sessionStart = Date.now();
       saveState();
       els.emailPreview.value = "";
@@ -2461,6 +2712,9 @@
     }
 
     function bindEvents() {
+      ["pointerdown", "keydown", "input", "click", "touchstart"].forEach((eventName) => {
+        document.addEventListener(eventName, markInteraction, { passive: true });
+      });
       els.addProfileBtn.addEventListener("click", openProfileModal);
       els.cancelProfileBtn.addEventListener("click", closeProfileModal);
       els.saveProfileBtn.addEventListener("click", saveNewProfile);
@@ -2476,6 +2730,10 @@
         state.currentProfileId = currentProfileId;
         mathSession = null;
         writingSession = null;
+        lessonBlockActiveSeconds = 0;
+        sessionStart = Date.now();
+        lastInteractionAt = Date.now();
+        lastActivityTickAt = Date.now();
         els.mathPracticePanel.classList.add("hidden");
         els.writingPracticePanel.classList.add("hidden");
         els.emailPreview.value = "";
@@ -2526,17 +2784,19 @@
         renderParent();
       });
       els.parentEmail.addEventListener("input", () => {
-        state.parentEmail = els.parentEmail.value.trim();
-        saveState();
+        saveEmailSettings();
+      });
+      [els.emailJsPublicKey, els.emailJsServiceId, els.emailJsTemplateId, els.siteUrl].forEach((input) => {
+        input.addEventListener("input", saveEmailSettings);
       });
       els.summaryType.addEventListener("change", () => {
         els.emailPreview.value = generateEmailSummary();
       });
       els.generateEmailBtn.addEventListener("click", () => {
-        state.parentEmail = els.parentEmail.value.trim();
-        saveState();
+        saveEmailSettings();
         els.emailPreview.value = generateEmailSummary();
       });
+      els.sendEmailBtn.addEventListener("click", sendEmailSummary);
       els.copyEmailBtn.addEventListener("click", async () => {
         if (!els.emailPreview.value) els.emailPreview.value = generateEmailSummary();
         try {
@@ -2554,20 +2814,16 @@
 
     /*
       emailIntegrationExample:
-      A standalone HTML file cannot safely send email directly because API keys and SMTP
-      credentials would be visible to anyone who opens the file. The built-in approach
-      above generates a ready-to-copy parent summary.
+      This app sends email through EmailJS when parent settings include:
+        - public key
+        - service ID
+        - template ID
+      Create an EmailJS template with variables:
+        to_email, subject, student_name, summary, site_url
 
-      To send automatically later, add a browser email provider such as EmailJS:
-        1. Create an EmailJS account and template.
-        2. Load their SDK script.
-        3. Replace the copy button behavior with emailjs.send(serviceId, templateId, {
-             to_email: state.parentEmail,
-             student_name: getProfile().name,
-             summary: generateEmailSummary()
-           });
-
-      A more secure production option is a tiny backend endpoint:
+      Browser email services expose a public key by design. Do not put private SMTP
+      passwords or backend secrets into this HTML file. A more secure production option
+      is a tiny backend endpoint:
         fetch("/api/send-summary", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -2579,8 +2835,7 @@
     bindEvents();
     renderAll();
     setInterval(() => {
-      addTime(15);
-      if (activeView === "home") renderHome();
+      trackActivityAndMaybeEmail();
     }, 15000);
   </script>
 </body>
