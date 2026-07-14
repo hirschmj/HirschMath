@@ -1332,9 +1332,11 @@
     let lessonBlockActiveSeconds = 0;
     let lastActivityTickAt = Date.now();
     let autoEmailInFlight = false;
+    let lastAutoEmailAttemptAt = 0;
     const ACTIVE_GRACE_MS = 60000;
     const AUTO_EMAIL_ACTIVE_SECONDS = 5 * 60;
-    const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
+    const AUTO_EMAIL_IDLE_MS = 20 * 60 * 1000;
+    const AUTO_EMAIL_RETRY_MS = 2 * 60 * 1000;
 
     const els = {
       profileSelect: document.getElementById("profileSelect"),
@@ -1419,11 +1421,11 @@
       const firstProfile = createProfile("Student");
       return {
         currentProfileId: firstProfile.id,
-        parentEmail: "",
+        parentEmail: "hirschmj@gmail.com",
         emailJs: {
-          publicKey: "",
-          serviceId: "",
-          templateId: ""
+          publicKey: "vY4IDyQZY_SI2nXfZ",
+          serviceId: "service_pfowsjs",
+          templateId: "template_7lc33m8"
         },
         siteUrl: "https://hirschmj.github.io/HirschMath/",
         parentPin: "1234",
@@ -1489,8 +1491,15 @@
 
     function migrateState(saved) {
       saved.parentPin = saved.parentPin || "1234";
-      saved.parentEmail = saved.parentEmail || "";
-      saved.emailJs = Object.assign({ publicKey: "", serviceId: "", templateId: "" }, saved.emailJs || {});
+      saved.parentEmail = saved.parentEmail || "hirschmj@gmail.com";
+      saved.emailJs = Object.assign({
+        publicKey: "vY4IDyQZY_SI2nXfZ",
+        serviceId: "service_pfowsjs",
+        templateId: "template_7lc33m8"
+      }, saved.emailJs || {});
+      saved.emailJs.publicKey = saved.emailJs.publicKey || "vY4IDyQZY_SI2nXfZ";
+      saved.emailJs.serviceId = saved.emailJs.serviceId || "service_pfowsjs";
+      saved.emailJs.templateId = saved.emailJs.templateId || "template_7lc33m8";
       saved.siteUrl = saved.siteUrl || "https://hirschmj.github.io/HirschMath/";
       Object.values(saved.profiles).forEach((profile) => {
         profile.timeSpentSeconds = profile.timeSpentSeconds || 0;
@@ -2568,7 +2577,7 @@
           summary,
           site_url: state.siteUrl || "https://hirschmj.github.io/HirschMath/"
         });
-        const status = options.auto ? "Auto email status: Sent after 5 active minutes and 5 idle minutes." : "Email status: Sent successfully.";
+        const status = options.auto ? "Auto email status: Sent after 5 active minutes and 20 idle minutes." : "Email status: Sent successfully.";
         els.emailPreview.value = summary + "\n\n" + status;
         if (!silent) alert("Summary email sent.");
         return true;
@@ -2608,14 +2617,18 @@
       if (
         lessonBlockActiveSeconds >= AUTO_EMAIL_ACTIVE_SECONDS &&
         idleMs >= AUTO_EMAIL_IDLE_MS &&
+        now - lastAutoEmailAttemptAt >= AUTO_EMAIL_RETRY_MS &&
         !autoEmailInFlight
       ) {
         autoEmailInFlight = true;
+        lastAutoEmailAttemptAt = now;
         const sent = hasEmailConfig()
           ? await sendEmailSummary({ silent: true, auto: true, summaryType: "session" })
           : false;
-        lessonBlockActiveSeconds = 0;
-        sessionStart = Date.now();
+        if (sent) {
+          lessonBlockActiveSeconds = 0;
+          sessionStart = Date.now();
+        }
         autoEmailInFlight = false;
         if (!sent && parentUnlocked) {
           els.emailPreview.value = generateEmailSummary("session") + "\n\nAuto email status: Ready, but EmailJS settings are incomplete or sending failed.";
