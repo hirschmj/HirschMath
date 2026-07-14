@@ -734,6 +734,74 @@
       text-align: center;
     }
 
+    .session-finish-card {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 120;
+      width: min(230px, calc(100vw - 32px));
+      padding: 12px;
+      border: 3px solid #a71919;
+      border-radius: 16px;
+      background: #fff1f1;
+      box-shadow: 0 12px 30px rgba(95, 15, 15, 0.3);
+      text-align: center;
+    }
+
+    .session-finish-label {
+      display: block;
+      color: #781414;
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .session-finish-time {
+      display: block;
+      margin: 2px 0 8px;
+      color: #641010;
+      font-size: 1.55rem;
+      font-weight: 900;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .session-finish-btn {
+      width: 100%;
+      min-height: 54px;
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 12px;
+      color: #fff;
+      background: #c62828;
+      font-size: 1rem;
+      font-weight: 900;
+      line-height: 1.15;
+      box-shadow: 0 5px 0 #801515;
+    }
+
+    .session-finish-btn:disabled {
+      cursor: not-allowed;
+      opacity: 1;
+    }
+
+    .session-finish-card.ready {
+      border-color: #15783a;
+      background: #effbf3;
+      box-shadow: 0 12px 30px rgba(15, 91, 43, 0.28);
+    }
+
+    .session-finish-card.ready .session-finish-label,
+    .session-finish-card.ready .session-finish-time {
+      color: #115c2e;
+    }
+
+    .session-finish-card.ready .session-finish-btn {
+      cursor: pointer;
+      background: #18864a;
+      box-shadow: 0 5px 0 #0d5a30;
+    }
+
     .hidden {
       display: none !important;
     }
@@ -781,6 +849,12 @@
     }
 
     @media (max-width: 620px) {
+      .session-finish-card {
+        top: 8px;
+        right: 8px;
+        width: 190px;
+      }
+
       .app {
         width: min(100% - 18px, 1180px);
       }
@@ -804,6 +878,11 @@
   </style>
 </head>
 <body>
+  <aside class="session-finish-card" id="sessionFinishCard" aria-label="Current practice session">
+    <span class="session-finish-label">Current session</span>
+    <time class="session-finish-time" id="sessionElapsed" aria-live="off">00:00</time>
+    <button class="session-finish-btn" id="finishAndEmailBtn" type="button" disabled>I'm Done — Email Dad</button>
+  </aside>
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -1348,14 +1427,19 @@
     let lastActivityTickAt = Date.now();
     let autoEmailInFlight = false;
     let lastAutoEmailAttemptAt = 0;
+    let finishEmailInFlight = false;
     const ACTIVE_GRACE_MS = 60000;
     const AUTO_EMAIL_ACTIVE_SECONDS = 5 * 60;
+    const MANUAL_FINISH_SECONDS = 15 * 60;
     const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
     const AUTO_EMAIL_RETRY_MS = 2 * 60 * 1000;
 
     const els = {
       profileSelect: document.getElementById("profileSelect"),
       addProfileBtn: document.getElementById("addProfileBtn"),
+      sessionFinishCard: document.getElementById("sessionFinishCard"),
+      sessionElapsed: document.getElementById("sessionElapsed"),
+      finishAndEmailBtn: document.getElementById("finishAndEmailBtn"),
       profileModal: document.getElementById("profileModal"),
       newProfileName: document.getElementById("newProfileName"),
       cancelProfileBtn: document.getElementById("cancelProfileBtn"),
@@ -1618,6 +1702,19 @@
       renderWriting();
       renderDashboard();
       renderParent();
+      renderSessionFinishControl();
+    }
+
+    function renderSessionFinishControl() {
+      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - sessionStart) / 1000));
+      const minutes = Math.floor(elapsedSeconds / 60);
+      const seconds = elapsedSeconds % 60;
+      const ready = elapsedSeconds >= MANUAL_FINISH_SECONDS;
+      els.sessionElapsed.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      els.sessionFinishCard.classList.toggle("ready", ready);
+      els.finishAndEmailBtn.disabled = !ready || finishEmailInFlight;
+      els.finishAndEmailBtn.textContent = finishEmailInFlight ? "Sending Summary..." : "I'm Done — Email Dad";
+      els.finishAndEmailBtn.title = ready ? "End this session and email Dad" : `Available after ${formatDuration(MANUAL_FINISH_SECONDS - elapsedSeconds)}`;
     }
 
     function renderProfiles() {
@@ -2679,6 +2776,56 @@
       }
     }
 
+    function savePartialMathForSummary() {
+      if (!mathSession || mathSession.questionIndex < 1 || mathSession.summarySaved) return;
+      const profile = getProfile();
+      const elapsed = Math.max(20, Math.round((Date.now() - mathSession.startedAt) / 1000));
+      profile.math[mathSession.skillId].activities += 1;
+      profile.activities.unshift({
+        type: "math",
+        skillId: mathSession.skillId,
+        skillTitle: mathSession.skill.title,
+        correct: mathSession.correct,
+        total: mathSession.questionIndex,
+        date: new Date().toISOString(),
+        seconds: elapsed
+      });
+      profile.activities = profile.activities.slice(0, 120);
+      mathSession.summarySaved = true;
+      saveState();
+    }
+
+    async function finishSessionAndEmail() {
+      const elapsedSeconds = Math.floor((Date.now() - sessionStart) / 1000);
+      if (elapsedSeconds < MANUAL_FINISH_SECONDS || finishEmailInFlight) return;
+      if (writingSession && !writingSession.saved && els.writingResponse.value.trim()) {
+        saveWriting();
+        if (writingSession && !writingSession.saved) {
+          alert("Please finish or correct the writing response, then press Save Writing before ending the session.");
+          return;
+        }
+      }
+
+      finishEmailInFlight = true;
+      renderSessionFinishControl();
+      savePartialMathForSummary();
+      const sent = await sendEmailSummary({ summaryType: "session" });
+      finishEmailInFlight = false;
+      if (sent) {
+        mathSession = null;
+        writingSession = null;
+        lessonBlockActiveSeconds = 0;
+        sessionStart = Date.now();
+        lastInteractionAt = Date.now();
+        lastActivityTickAt = Date.now();
+        els.mathPracticePanel.classList.add("hidden");
+        els.writingPracticePanel.classList.add("hidden");
+        renderAll();
+      } else {
+        renderSessionFinishControl();
+      }
+    }
+
     function markInteraction() {
       lastInteractionAt = Date.now();
     }
@@ -2814,6 +2961,7 @@
       ["pointerdown", "keydown", "input", "click", "touchstart"].forEach((eventName) => {
         document.addEventListener(eventName, markInteraction, { passive: true });
       });
+      els.finishAndEmailBtn.addEventListener("click", finishSessionAndEmail);
       els.addProfileBtn.addEventListener("click", openProfileModal);
       els.cancelProfileBtn.addEventListener("click", closeProfileModal);
       els.saveProfileBtn.addEventListener("click", saveNewProfile);
@@ -2943,6 +3091,7 @@
     setInterval(() => {
       trackActivityAndMaybeEmail();
     }, 15000);
+    setInterval(renderSessionFinishControl, 1000);
   </script>
 </body>
 </html>
