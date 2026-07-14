@@ -1012,6 +1012,20 @@
 
             <div class="settings-row">
               <label>
+                Automatic email delay
+                <select id="autoEmailDelay" class="field">
+                  <option value="300">5 minutes of inactivity</option>
+                  <option value="30">Test mode: 15 sec active + 30 sec idle</option>
+                </select>
+              </label>
+              <div class="skill-card" style="padding: 12px;">
+                <strong>Email delivery status</strong>
+                <p class="small" id="emailStatus" style="margin: 6px 0 0;">No email has been sent yet.</p>
+              </div>
+            </div>
+
+            <div class="settings-row">
+              <label>
                 EmailJS public key
                 <input id="emailJsPublicKey" class="field" type="text" placeholder="public key from EmailJS" />
               </label>
@@ -1335,7 +1349,7 @@
     let lastAutoEmailAttemptAt = 0;
     const ACTIVE_GRACE_MS = 60000;
     const AUTO_EMAIL_ACTIVE_SECONDS = 5 * 60;
-    const AUTO_EMAIL_IDLE_MS = 20 * 60 * 1000;
+    const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
     const AUTO_EMAIL_RETRY_MS = 2 * 60 * 1000;
 
     const els = {
@@ -1408,6 +1422,8 @@
       emailJsServiceId: document.getElementById("emailJsServiceId"),
       emailJsTemplateId: document.getElementById("emailJsTemplateId"),
       siteUrl: document.getElementById("siteUrl"),
+      autoEmailDelay: document.getElementById("autoEmailDelay"),
+      emailStatus: document.getElementById("emailStatus"),
       summaryType: document.getElementById("summaryType"),
       generateEmailBtn: document.getElementById("generateEmailBtn"),
       sendEmailBtn: document.getElementById("sendEmailBtn"),
@@ -1427,6 +1443,8 @@
           serviceId: "service_pfowsjs",
           templateId: "template_7lc33m8"
         },
+        autoEmailIdleSeconds: 5 * 60,
+        emailDelivery: { status: "never", lastAttemptAt: null, lastSentAt: null, error: "" },
         siteUrl: "https://hirschmj.github.io/HirschMath/",
         parentPin: "1234",
         profiles: {
@@ -1501,6 +1519,8 @@
       saved.emailJs.serviceId = saved.emailJs.serviceId || "service_pfowsjs";
       saved.emailJs.templateId = saved.emailJs.templateId || "template_7lc33m8";
       saved.siteUrl = saved.siteUrl || "https://hirschmj.github.io/HirschMath/";
+      saved.autoEmailIdleSeconds = Number(saved.autoEmailIdleSeconds) || 5 * 60;
+      saved.emailDelivery = Object.assign({ status: "never", lastAttemptAt: null, lastSentAt: null, error: "" }, saved.emailDelivery || {});
       Object.values(saved.profiles).forEach((profile) => {
         profile.timeSpentSeconds = profile.timeSpentSeconds || 0;
         profile.todayKey = profile.todayKey || dayKey();
@@ -1566,6 +1586,13 @@
 
     function formatMinutes(seconds) {
       return Math.max(0, Math.round(seconds / 60)) + " min";
+    }
+
+    function formatDuration(seconds) {
+      const wholeSeconds = Math.max(0, Math.round(seconds || 0));
+      const minutes = Math.floor(wholeSeconds / 60);
+      const remainder = wholeSeconds % 60;
+      return minutes ? `${minutes} min ${remainder} sec` : `${remainder} sec`;
     }
 
     function escapeHtml(value) {
@@ -2446,10 +2473,36 @@
       els.emailJsServiceId.value = state.emailJs.serviceId || "";
       els.emailJsTemplateId.value = state.emailJs.templateId || "";
       els.siteUrl.value = state.siteUrl || "https://hirschmj.github.io/HirschMath/";
+      els.autoEmailDelay.value = String(state.autoEmailIdleSeconds || 300);
+      renderEmailStatus();
       els.parentGate.classList.toggle("hidden", parentUnlocked);
       els.parentPanel.classList.toggle("hidden", !parentUnlocked);
       if (parentUnlocked && !els.emailPreview.value) {
         els.emailPreview.value = generateEmailSummary();
+      }
+    }
+
+    function getAutoEmailIdleMs() {
+      const configuredMs = Number(state.autoEmailIdleSeconds) * 1000;
+      return Number.isFinite(configuredMs) && configuredMs > 0 ? configuredMs : AUTO_EMAIL_IDLE_MS;
+    }
+
+    function getRequiredActiveSeconds() {
+      return getAutoEmailIdleMs() < 60000 ? 15 : AUTO_EMAIL_ACTIVE_SECONDS;
+    }
+
+    function renderEmailStatus() {
+      const delivery = state.emailDelivery || {};
+      const delayLabel = getAutoEmailIdleMs() < 60000 ? "30-second test mode" : "5-minute inactivity mode";
+      if (delivery.status === "sent" && delivery.lastSentAt) {
+        els.emailStatus.textContent = `Sent successfully to ${state.parentEmail} on ${new Date(delivery.lastSentAt).toLocaleString()}. Automatic sending is using ${delayLabel}.`;
+      } else if (delivery.status === "failed" && delivery.lastAttemptAt) {
+        const retryAt = new Date(new Date(delivery.lastAttemptAt).getTime() + AUTO_EMAIL_RETRY_MS);
+        els.emailStatus.textContent = `Last attempt failed on ${new Date(delivery.lastAttemptAt).toLocaleString()}. The summary is retained and the next retry is eligible after ${retryAt.toLocaleTimeString()}.`;
+      } else if (delivery.status === "sending") {
+        els.emailStatus.textContent = `Sending a summary to ${state.parentEmail}...`;
+      } else {
+        els.emailStatus.textContent = `No email has been sent yet. Automatic sending is using ${delayLabel}.`;
       }
     }
 
@@ -2472,6 +2525,10 @@
       const todayActivityMinutes = Math.round(todayActivities.reduce((sum, item) => sum + (item.seconds || 0), 0) / 60);
       const todayTrackedMinutes = Math.max(Math.round((profile.todaySeconds || 0) / 60), todayActivityMinutes);
       const totalTrackedMinutes = Math.max(Math.round((profile.timeSpentSeconds || 0) / 60), Math.round(profile.activities.reduce((sum, item) => sum + (item.seconds || 0), 0) / 60));
+      const sessionSpanSeconds = Math.max(0, Math.round((Date.now() - sessionStart) / 1000));
+      const sessionActiveSeconds = Math.min(sessionSpanSeconds, lessonBlockActiveSeconds);
+      const sessionIdleSeconds = Math.max(0, sessionSpanSeconds - sessionActiveSeconds);
+      const writingWords = writing.reduce((sum, item) => sum + (item.words || 0), 0);
       const struggles = findWeakAreas(profile).slice(0, 4);
       const strengths = findStrengths(profile).slice(0, 4);
       const improvements = strengths.length
@@ -2491,17 +2548,23 @@
         `Practice site: ${state.siteUrl || "https://hirschmj.github.io/HirschMath/"}`,
         "",
         "Time:",
-        `- Today: ${todayTrackedMinutes} minute(s)`,
-        `- This summary range: ${rangeMinutes} minute(s)`,
+        `- Active practice this browser session: ${formatDuration(sessionActiveSeconds)}`,
+        `- Total session span: ${formatDuration(sessionSpanSeconds)}`,
+        `- Inactive time during session: ${formatDuration(sessionIdleSeconds)}`,
+        `- Active time today: ${todayTrackedMinutes} minute(s)`,
+        `- Saved activity time in this summary range: ${rangeMinutes} minute(s)`,
         `- Total saved time: ${totalTrackedMinutes} minute(s)`,
         "",
         "Math:",
+        `- Problems attempted in this range: ${mathTotal}`,
+        `- Correct answers: ${mathCorrect}`,
         `- Accuracy in this range: ${mathTotal ? percent(mathCorrect, mathTotal) + "%" : "No math activities in this range"}`,
         `- Skills practiced: ${practicedSkills.length ? practicedSkills.join(", ") : "None yet"}`,
         `- Current overall math accuracy: ${getTotals(profile).mathAccuracy}%`,
         "",
         "Writing:",
         `- Writing pieces completed: ${writing.length}`,
+        `- Words written: ${writingWords}`,
         `- Prompts completed: ${writing.map((item) => item.skillTitle).join(", ") || "None yet"}`,
         `- Total saved writing pieces: ${profile.writingHistory.length}`,
         "",
@@ -2525,6 +2588,7 @@
       state.emailJs.serviceId = els.emailJsServiceId.value.trim();
       state.emailJs.templateId = els.emailJsTemplateId.value.trim();
       state.siteUrl = els.siteUrl.value.trim() || "https://hirschmj.github.io/HirschMath/";
+      state.autoEmailIdleSeconds = Number(els.autoEmailDelay.value) || 300;
       saveState();
     }
 
@@ -2567,6 +2631,14 @@
         els.sendEmailBtn.disabled = true;
         els.sendEmailBtn.textContent = "Sending...";
       }
+      state.emailDelivery = {
+        status: "sending",
+        lastAttemptAt: new Date().toISOString(),
+        lastSentAt: state.emailDelivery && state.emailDelivery.lastSentAt || null,
+        error: ""
+      };
+      saveState();
+      if (parentUnlocked) renderEmailStatus();
       try {
         const emailjs = await loadEmailJsSdk();
         emailjs.init({ publicKey: state.emailJs.publicKey });
@@ -2577,12 +2649,25 @@
           summary,
           site_url: state.siteUrl || "https://hirschmj.github.io/HirschMath/"
         });
-        const status = options.auto ? "Auto email status: Sent after 5 active minutes and 20 idle minutes." : "Email status: Sent successfully.";
+        const sentAt = new Date().toISOString();
+        state.emailDelivery = { status: "sent", lastAttemptAt: sentAt, lastSentAt: sentAt, error: "" };
+        saveState();
+        const idleSeconds = Math.round(getAutoEmailIdleMs() / 1000);
+        const status = options.auto ? `Auto email status: Sent after 5 active minutes and ${idleSeconds < 60 ? idleSeconds + " idle seconds" : idleSeconds / 60 + " idle minutes"}.` : "Email status: Sent successfully.";
         els.emailPreview.value = summary + "\n\n" + status;
+        if (parentUnlocked) renderEmailStatus();
         if (!silent) alert("Summary email sent.");
         return true;
       } catch (error) {
+        state.emailDelivery = {
+          status: "failed",
+          lastAttemptAt: new Date().toISOString(),
+          lastSentAt: state.emailDelivery && state.emailDelivery.lastSentAt || null,
+          error: error && error.text ? String(error.text) : "Email service unavailable"
+        };
+        saveState();
         els.emailPreview.value = summary + "\n\nEmail status: Could not send. Check EmailJS settings and template variables.";
+        if (parentUnlocked) renderEmailStatus();
         if (!silent) alert("Email could not be sent. Check the EmailJS settings and template variables.");
         return false;
       } finally {
@@ -2615,8 +2700,8 @@
       }
 
       if (
-        lessonBlockActiveSeconds >= AUTO_EMAIL_ACTIVE_SECONDS &&
-        idleMs >= AUTO_EMAIL_IDLE_MS &&
+        lessonBlockActiveSeconds >= getRequiredActiveSeconds() &&
+        idleMs >= getAutoEmailIdleMs() &&
         now - lastAutoEmailAttemptAt >= AUTO_EMAIL_RETRY_MS &&
         !autoEmailInFlight
       ) {
@@ -2801,6 +2886,13 @@
       });
       [els.emailJsPublicKey, els.emailJsServiceId, els.emailJsTemplateId, els.siteUrl].forEach((input) => {
         input.addEventListener("input", saveEmailSettings);
+      });
+      els.autoEmailDelay.addEventListener("change", () => {
+        saveEmailSettings();
+        lessonBlockActiveSeconds = 0;
+        lastInteractionAt = Date.now();
+        lastActivityTickAt = Date.now();
+        renderEmailStatus();
       });
       els.summaryType.addEventListener("change", () => {
         els.emailPreview.value = generateEmailSummary();
