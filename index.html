@@ -704,7 +704,7 @@
       place-items: center;
       padding: 18px;
       background: rgba(37, 48, 71, 0.48);
-      z-index: 30;
+      z-index: 200;
     }
 
     .modal-backdrop.open {
@@ -725,6 +725,25 @@
       justify-content: flex-end;
       gap: 10px;
       margin-top: 14px;
+    }
+
+    .session-recap {
+      margin: 12px 0 16px;
+      padding: 14px;
+      border: 1px solid #9ed7b2;
+      border-radius: 12px;
+      background: #effbf3;
+      color: #174f2d;
+      font-weight: 750;
+      line-height: 1.5;
+    }
+
+    .message-count {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-align: right;
     }
 
     .footer-note {
@@ -1160,6 +1179,23 @@
     </div>
   </div>
 
+  <div class="modal-backdrop" id="finishSessionModal" role="dialog" aria-modal="true" aria-labelledby="finishSessionModalTitle">
+    <div class="modal">
+      <h2 id="finishSessionModalTitle">Great work today!</h2>
+      <div class="session-recap" id="finishSessionRecap"></div>
+      <label for="dadMessage">
+        What do you want to say to Dad?
+        <textarea id="dadMessage" class="field" rows="5" maxlength="500" placeholder="Optional: Tell Dad something about your practice, your day, or anything else!"></textarea>
+      </label>
+      <span class="message-count" id="dadMessageCount">0 / 500</span>
+      <p class="small">This message is optional. You can send the summary without writing anything.</p>
+      <div class="modal-actions">
+        <button class="btn" id="cancelFinishSessionBtn" type="button">Keep Practicing</button>
+        <button class="btn green" id="confirmFinishSessionBtn" type="button">Send to Dad</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const STORAGE_KEY = "brightStepsPractice.v1";
     const ACTIVITY_GOAL = 5;
@@ -1440,6 +1476,12 @@
       sessionFinishCard: document.getElementById("sessionFinishCard"),
       sessionElapsed: document.getElementById("sessionElapsed"),
       finishAndEmailBtn: document.getElementById("finishAndEmailBtn"),
+      finishSessionModal: document.getElementById("finishSessionModal"),
+      finishSessionRecap: document.getElementById("finishSessionRecap"),
+      dadMessage: document.getElementById("dadMessage"),
+      dadMessageCount: document.getElementById("dadMessageCount"),
+      cancelFinishSessionBtn: document.getElementById("cancelFinishSessionBtn"),
+      confirmFinishSessionBtn: document.getElementById("confirmFinishSessionBtn"),
       profileModal: document.getElementById("profileModal"),
       newProfileName: document.getElementById("newProfileName"),
       cancelProfileBtn: document.getElementById("cancelProfileBtn"),
@@ -2723,7 +2765,10 @@
       }
       const profile = getProfile();
       const subject = profile.name + "'s Bright Steps Practice Summary";
-      const summary = generateEmailSummary(summaryType);
+      const personalMessage = String(options.personalMessage || "").trim().slice(0, 500);
+      const summary = generateEmailSummary(summaryType) + (personalMessage
+        ? `\n\nA message from ${profile.name}:\n${personalMessage}`
+        : "");
       els.emailPreview.value = summary;
       if (!silent) {
         els.sendEmailBtn.disabled = true;
@@ -2795,7 +2840,41 @@
       saveState();
     }
 
-    async function finishSessionAndEmail() {
+    function getFinishSessionRecap() {
+      const profile = getProfile();
+      const activities = profile.activities.filter((item) => new Date(item.date).getTime() >= sessionStart);
+      const savedMath = activities.filter((item) => item.type === "math");
+      const savedWriting = activities.filter((item) => item.type === "writing");
+      const currentMathProblems = mathSession && !mathSession.summarySaved ? mathSession.questionIndex : 0;
+      const hasCurrentMathLesson = currentMathProblems > 0;
+      const hasCurrentWriting = Boolean(writingSession && !writingSession.saved && els.writingResponse.value.trim());
+      const lessons = activities.length + (hasCurrentMathLesson ? 1 : 0) + (hasCurrentWriting ? 1 : 0);
+      const mathProblems = savedMath.reduce((sum, item) => sum + (item.total || 0), 0) + currentMathProblems;
+      const writingPieces = savedWriting.length + (hasCurrentWriting ? 1 : 0);
+      const minutes = Math.max(1, Math.floor((Date.now() - sessionStart) / 60000));
+      return { minutes, lessons, mathProblems, writingPieces };
+    }
+
+    function openFinishSessionModal() {
+      const elapsedSeconds = Math.floor((Date.now() - sessionStart) / 1000);
+      if (elapsedSeconds < MANUAL_FINISH_SECONDS || finishEmailInFlight) return;
+      const recap = getFinishSessionRecap();
+      const details = [];
+      if (recap.mathProblems) details.push(`${recap.mathProblems} math problem${recap.mathProblems === 1 ? "" : "s"}`);
+      if (recap.writingPieces) details.push(`${recap.writingPieces} writing piece${recap.writingPieces === 1 ? "" : "s"}`);
+      els.finishSessionRecap.textContent = `You practiced for ${recap.minutes} minutes and completed ${recap.lessons} lesson${recap.lessons === 1 ? "" : "s"}.${details.length ? " That included " + details.join(" and ") + "." : ""}`;
+      els.dadMessage.value = "";
+      els.dadMessageCount.textContent = "0 / 500";
+      els.finishSessionModal.classList.add("open");
+      els.dadMessage.focus();
+    }
+
+    function closeFinishSessionModal() {
+      if (finishEmailInFlight) return;
+      els.finishSessionModal.classList.remove("open");
+    }
+
+    async function finishSessionAndEmail(personalMessage = "") {
       const elapsedSeconds = Math.floor((Date.now() - sessionStart) / 1000);
       if (elapsedSeconds < MANUAL_FINISH_SECONDS || finishEmailInFlight) return;
       if (writingSession && !writingSession.saved && els.writingResponse.value.trim()) {
@@ -2807,11 +2886,18 @@
       }
 
       finishEmailInFlight = true;
+      els.confirmFinishSessionBtn.disabled = true;
+      els.cancelFinishSessionBtn.disabled = true;
+      els.confirmFinishSessionBtn.textContent = "Sending...";
       renderSessionFinishControl();
       savePartialMathForSummary();
-      const sent = await sendEmailSummary({ summaryType: "session" });
+      const sent = await sendEmailSummary({ summaryType: "session", personalMessage });
       finishEmailInFlight = false;
+      els.confirmFinishSessionBtn.disabled = false;
+      els.cancelFinishSessionBtn.disabled = false;
+      els.confirmFinishSessionBtn.textContent = "Send to Dad";
       if (sent) {
+        els.finishSessionModal.classList.remove("open");
         mathSession = null;
         writingSession = null;
         lessonBlockActiveSeconds = 0;
@@ -2961,13 +3047,26 @@
       ["pointerdown", "keydown", "input", "click", "touchstart"].forEach((eventName) => {
         document.addEventListener(eventName, markInteraction, { passive: true });
       });
-      els.finishAndEmailBtn.addEventListener("click", finishSessionAndEmail);
+      els.finishAndEmailBtn.addEventListener("click", openFinishSessionModal);
+      els.cancelFinishSessionBtn.addEventListener("click", closeFinishSessionModal);
+      els.confirmFinishSessionBtn.addEventListener("click", () => {
+        finishSessionAndEmail(els.dadMessage.value);
+      });
+      els.dadMessage.addEventListener("input", () => {
+        els.dadMessageCount.textContent = `${els.dadMessage.value.length} / 500`;
+      });
+      els.finishSessionModal.addEventListener("click", (event) => {
+        if (event.target === els.finishSessionModal) closeFinishSessionModal();
+      });
       els.addProfileBtn.addEventListener("click", openProfileModal);
       els.cancelProfileBtn.addEventListener("click", closeProfileModal);
       els.saveProfileBtn.addEventListener("click", saveNewProfile);
       els.newProfileName.addEventListener("keydown", (event) => {
         if (event.key === "Enter") saveNewProfile();
         if (event.key === "Escape") closeProfileModal();
+      });
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && els.finishSessionModal.classList.contains("open")) closeFinishSessionModal();
       });
       els.profileModal.addEventListener("click", (event) => {
         if (event.target === els.profileModal) closeProfileModal();
