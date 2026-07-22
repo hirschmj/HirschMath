@@ -778,11 +778,50 @@
 
     .session-finish-time {
       display: block;
-      margin: 2px 0 8px;
+      margin: 2px 0 6px;
       color: #641010;
-      font-size: 1.55rem;
+      font-size: 1.25rem;
       font-weight: 900;
       font-variant-numeric: tabular-nums;
+    }
+
+    .session-requirement {
+      margin: 7px 0;
+      text-align: left;
+    }
+
+    .session-requirement-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: #641010;
+      font-size: 0.76rem;
+      font-weight: 850;
+    }
+
+    .session-progress-track {
+      height: 8px;
+      margin-top: 4px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: #e6bcbc;
+    }
+
+    .session-progress-fill {
+      width: 0;
+      height: 100%;
+      border-radius: inherit;
+      background: #c62828;
+      transition: width 0.25s ease;
+    }
+
+    .session-needed {
+      min-height: 2.2em;
+      margin: 8px 0;
+      color: #781414;
+      font-size: 0.75rem;
+      font-weight: 800;
+      line-height: 1.1;
     }
 
     .session-finish-btn {
@@ -811,8 +850,18 @@
     }
 
     .session-finish-card.ready .session-finish-label,
-    .session-finish-card.ready .session-finish-time {
+    .session-finish-card.ready .session-finish-time,
+    .session-finish-card.ready .session-requirement-row,
+    .session-finish-card.ready .session-needed {
       color: #115c2e;
+    }
+
+    .session-finish-card.ready .session-progress-track {
+      background: #bfe3ca;
+    }
+
+    .session-finish-card.ready .session-progress-fill {
+      background: #18864a;
     }
 
     .session-finish-card.ready .session-finish-btn {
@@ -899,7 +948,16 @@
 <body>
   <aside class="session-finish-card" id="sessionFinishCard" aria-label="Current practice session">
     <span class="session-finish-label">Current session</span>
-    <time class="session-finish-time" id="sessionElapsed" aria-live="off">00:00</time>
+    <time class="session-finish-time" id="sessionElapsed" aria-live="off">Active 00:00</time>
+    <div class="session-requirement">
+      <div class="session-requirement-row"><span>Active time</span><span id="sessionTimeProgress">00:00 / 15:00</span></div>
+      <div class="session-progress-track"><div class="session-progress-fill" id="sessionTimeFill"></div></div>
+    </div>
+    <div class="session-requirement">
+      <div class="session-requirement-row"><span>Work completed</span><span id="sessionWorkProgress">0 / 15 points</span></div>
+      <div class="session-progress-track"><div class="session-progress-fill" id="sessionWorkFill"></div></div>
+    </div>
+    <p class="session-needed" id="sessionNeeded">Still needed: 15:00 active time and 15 points</p>
     <button class="session-finish-btn" id="finishAndEmailBtn" type="button" disabled>I'm Done — Email Dad</button>
   </aside>
   <div class="app">
@@ -1457,16 +1515,18 @@
     let parentUnlocked = false;
     let mathSession = null;
     let writingSession = null;
-    let sessionStart = Date.now();
+    let sessionStart = getSessionProgress().startedAt;
     let lastInteractionAt = Date.now();
-    let lessonBlockActiveSeconds = 0;
+    let lessonBlockActiveSeconds = getSessionProgress().activeSeconds;
     let lastActivityTickAt = Date.now();
     let autoEmailInFlight = false;
     let lastAutoEmailAttemptAt = 0;
     let finishEmailInFlight = false;
     const ACTIVE_GRACE_MS = 60000;
-    const AUTO_EMAIL_ACTIVE_SECONDS = 5 * 60;
     const MANUAL_FINISH_SECONDS = 15 * 60;
+    const REQUIRED_WORK_POINTS = 15;
+    const MATH_ATTEMPT_POINTS = 1;
+    const WRITING_ASSIGNMENT_POINTS = 5;
     const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
     const AUTO_EMAIL_RETRY_MS = 2 * 60 * 1000;
 
@@ -1475,6 +1535,11 @@
       addProfileBtn: document.getElementById("addProfileBtn"),
       sessionFinishCard: document.getElementById("sessionFinishCard"),
       sessionElapsed: document.getElementById("sessionElapsed"),
+      sessionTimeProgress: document.getElementById("sessionTimeProgress"),
+      sessionTimeFill: document.getElementById("sessionTimeFill"),
+      sessionWorkProgress: document.getElementById("sessionWorkProgress"),
+      sessionWorkFill: document.getElementById("sessionWorkFill"),
+      sessionNeeded: document.getElementById("sessionNeeded"),
       finishAndEmailBtn: document.getElementById("finishAndEmailBtn"),
       finishSessionModal: document.getElementById("finishSessionModal"),
       finishSessionRecap: document.getElementById("finishSessionRecap"),
@@ -1614,7 +1679,20 @@
         math,
         writing,
         activities: [],
-        writingHistory: []
+        writingHistory: [],
+        sessionProgress: createSessionProgress()
+      };
+    }
+
+    function createSessionProgress() {
+      return {
+        startedAt: Date.now(),
+        activeSeconds: 0,
+        workPoints: 0,
+        mathAttempts: 0,
+        mathCorrect: 0,
+        writingAssignments: 0,
+        creditedWork: {}
       };
     }
 
@@ -1654,6 +1732,8 @@
         profile.todaySeconds = profile.todaySeconds || 0;
         profile.activities = profile.activities || [];
         profile.writingHistory = profile.writingHistory || [];
+        profile.sessionProgress = Object.assign(createSessionProgress(), profile.sessionProgress || {});
+        profile.sessionProgress.creditedWork = profile.sessionProgress.creditedWork || {};
         profile.math = profile.math || {};
         mathSkills.forEach((skill) => {
           profile.math[skill.id] = Object.assign({
@@ -1694,6 +1774,41 @@
       return state.profiles[currentProfileId];
     }
 
+    function getSessionProgress() {
+      const profile = getProfile();
+      if (!profile.sessionProgress) profile.sessionProgress = createSessionProgress();
+      return profile.sessionProgress;
+    }
+
+    function restoreSessionProgress() {
+      const progress = getSessionProgress();
+      sessionStart = Number(progress.startedAt) || Date.now();
+      lessonBlockActiveSeconds = Number(progress.activeSeconds) || 0;
+      lastInteractionAt = Date.now();
+      lastActivityTickAt = Date.now();
+    }
+
+    function resetSessionProgress() {
+      getProfile().sessionProgress = createSessionProgress();
+      restoreSessionProgress();
+    }
+
+    function creditSessionWork(workId, points, type, correct = false) {
+      const progress = getSessionProgress();
+      if (!workId || progress.creditedWork[workId]) return false;
+      progress.creditedWork[workId] = true;
+      progress.workPoints += points;
+      if (type === "math") {
+        progress.mathAttempts += 1;
+        if (correct) progress.mathCorrect += 1;
+      } else if (type === "writing") {
+        progress.writingAssignments += 1;
+      }
+      saveState();
+      renderSessionFinishControl();
+      return true;
+    }
+
     function dayKey(date = new Date()) {
       return date.toISOString().slice(0, 10);
     }
@@ -1722,6 +1837,11 @@
       return minutes ? `${minutes} min ${remainder} sec` : `${remainder} sec`;
     }
 
+    function formatClock(seconds) {
+      const wholeSeconds = Math.max(0, Math.ceil(seconds || 0));
+      return `${Math.floor(wholeSeconds / 60)}:${String(wholeSeconds % 60).padStart(2, "0")}`;
+    }
+
     function escapeHtml(value) {
       return String(value).replace(/[&<>"']/g, (char) => ({
         "&": "&amp;",
@@ -1748,15 +1868,36 @@
     }
 
     function renderSessionFinishControl() {
-      const elapsedSeconds = Math.max(0, Math.floor((Date.now() - sessionStart) / 1000));
-      const minutes = Math.floor(elapsedSeconds / 60);
-      const seconds = elapsedSeconds % 60;
-      const ready = elapsedSeconds >= MANUAL_FINISH_SECONDS;
-      els.sessionElapsed.textContent = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      const progress = getSessionProgress();
+      const activeSeconds = Math.max(0, Math.floor(lessonBlockActiveSeconds));
+      const shownSeconds = Math.min(activeSeconds, MANUAL_FINISH_SECONDS);
+      const minutes = Math.floor(shownSeconds / 60);
+      const seconds = shownSeconds % 60;
+      const points = Math.max(0, Number(progress.workPoints) || 0);
+      const remainingSeconds = Math.max(0, MANUAL_FINISH_SECONDS - activeSeconds);
+      const remainingPoints = Math.max(0, REQUIRED_WORK_POINTS - points);
+      const timeComplete = remainingSeconds === 0;
+      const workComplete = remainingPoints === 0;
+      const ready = timeComplete && workComplete;
+      const timeText = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      els.sessionElapsed.textContent = `Active ${timeText}`;
+      els.sessionTimeProgress.textContent = `${timeText} / 15:00`;
+      els.sessionTimeFill.style.width = Math.min(100, (activeSeconds / MANUAL_FINISH_SECONDS) * 100) + "%";
+      els.sessionWorkProgress.textContent = `${points} / ${REQUIRED_WORK_POINTS} points`;
+      els.sessionWorkFill.style.width = Math.min(100, (points / REQUIRED_WORK_POINTS) * 100) + "%";
+      if (ready) {
+        els.sessionNeeded.textContent = "Session requirements complete!";
+      } else if (remainingSeconds && remainingPoints) {
+        els.sessionNeeded.textContent = `Still needed: ${formatClock(remainingSeconds)} active time and ${remainingPoints} point${remainingPoints === 1 ? "" : "s"}`;
+      } else if (remainingSeconds) {
+        els.sessionNeeded.textContent = `Still needed: ${formatClock(remainingSeconds)} active time`;
+      } else {
+        els.sessionNeeded.textContent = `Still needed: ${remainingPoints} point${remainingPoints === 1 ? "" : "s"}`;
+      }
       els.sessionFinishCard.classList.toggle("ready", ready);
       els.finishAndEmailBtn.disabled = !ready || finishEmailInFlight;
       els.finishAndEmailBtn.textContent = finishEmailInFlight ? "Sending Summary..." : "I'm Done — Email Dad";
-      els.finishAndEmailBtn.title = ready ? "End this session and email Dad" : `Available after ${formatDuration(MANUAL_FINISH_SECONDS - elapsedSeconds)}`;
+      els.finishAndEmailBtn.title = ready ? "End this session and email Dad" : els.sessionNeeded.textContent;
     }
 
     function renderProfiles() {
@@ -1885,6 +2026,7 @@
       const profile = getProfile();
       const skillData = profile.math[mathSession.skillId];
       mathSession.current = generateMathQuestion(mathSession.skillId, skillData.level);
+      mathSession.current.workId = makeId();
       mathSession.answered = false;
       els.mathQuestion.textContent = mathSession.current.prompt;
       renderMathWorkspace(mathSession.current);
@@ -1986,6 +2128,7 @@
       }
       const correct = isAnswerCorrect(userAnswer, mathSession.current.answer, mathSession.current.type);
       mathSession.answered = true;
+      creditSessionWork(mathSession.current.workId, MATH_ATTEMPT_POINTS, "math", correct);
       skillData.attempts += 1;
       skillData.lastPracticed = new Date().toISOString();
       if (correct) {
@@ -2305,6 +2448,7 @@
       showView("writing");
       const promptData = getWritingPrompt(skillId);
       writingSession = {
+        workId: makeId(),
         skillId,
         skill,
         promptData,
@@ -2453,6 +2597,7 @@
         words
       });
       profile.activities = profile.activities.slice(0, 120);
+      creditSessionWork(writingSession.workId, WRITING_ASSIGNMENT_POINTS, "writing");
       els.writingFeedback.className = "feedback good";
       els.writingFeedback.textContent = "Saved! Your writing history now has this piece.";
       writingSession.saved = true;
@@ -2628,7 +2773,7 @@
     }
 
     function getRequiredActiveSeconds() {
-      return getAutoEmailIdleMs() < 60000 ? 15 : AUTO_EMAIL_ACTIVE_SECONDS;
+      return getAutoEmailIdleMs() < 60000 ? 15 : MANUAL_FINISH_SECONDS;
     }
 
     function renderEmailStatus() {
@@ -2648,6 +2793,7 @@
 
     function generateEmailSummary(summaryTypeOverride) {
       const profile = getProfile();
+      const sessionProgress = getSessionProgress();
       const summaryType = summaryTypeOverride || els.summaryType.value || "session";
       const since = summaryType === "weekly"
         ? Date.now() - 7 * 24 * 60 * 60 * 1000
@@ -2694,6 +2840,12 @@
         `- Active time today: ${todayTrackedMinutes} minute(s)`,
         `- Saved activity time in this summary range: ${rangeMinutes} minute(s)`,
         `- Total saved time: ${totalTrackedMinutes} minute(s)`,
+        "",
+        "Session completion:",
+        `- Work points: ${sessionProgress.workPoints} / ${REQUIRED_WORK_POINTS}`,
+        `- Math questions attempted: ${sessionProgress.mathAttempts}`,
+        `- Math accuracy: ${sessionProgress.mathAttempts ? percent(sessionProgress.mathCorrect, sessionProgress.mathAttempts) + "%" : "No math attempts"}`,
+        `- Writing assignments completed: ${sessionProgress.writingAssignments}`,
         "",
         "Math:",
         `- Problems attempted in this range: ${mathTotal}`,
@@ -2842,6 +2994,7 @@
 
     function getFinishSessionRecap() {
       const profile = getProfile();
+      const progress = getSessionProgress();
       const activities = profile.activities.filter((item) => new Date(item.date).getTime() >= sessionStart);
       const savedMath = activities.filter((item) => item.type === "math");
       const savedWriting = activities.filter((item) => item.type === "writing");
@@ -2849,20 +3002,20 @@
       const hasCurrentMathLesson = currentMathProblems > 0;
       const hasCurrentWriting = Boolean(writingSession && !writingSession.saved && els.writingResponse.value.trim());
       const lessons = activities.length + (hasCurrentMathLesson ? 1 : 0) + (hasCurrentWriting ? 1 : 0);
-      const mathProblems = savedMath.reduce((sum, item) => sum + (item.total || 0), 0) + currentMathProblems;
-      const writingPieces = savedWriting.length + (hasCurrentWriting ? 1 : 0);
-      const minutes = Math.max(1, Math.floor((Date.now() - sessionStart) / 60000));
-      return { minutes, lessons, mathProblems, writingPieces };
+      const mathProblems = Math.max(progress.mathAttempts, savedMath.reduce((sum, item) => sum + (item.total || 0), 0) + currentMathProblems);
+      const writingPieces = Math.max(progress.writingAssignments, savedWriting.length + (hasCurrentWriting ? 1 : 0));
+      const minutes = Math.floor(lessonBlockActiveSeconds / 60);
+      return { minutes, lessons, mathProblems, writingPieces, workPoints: progress.workPoints };
     }
 
     function openFinishSessionModal() {
-      const elapsedSeconds = Math.floor((Date.now() - sessionStart) / 1000);
-      if (elapsedSeconds < MANUAL_FINISH_SECONDS || finishEmailInFlight) return;
+      const progress = getSessionProgress();
+      if (lessonBlockActiveSeconds < MANUAL_FINISH_SECONDS || progress.workPoints < REQUIRED_WORK_POINTS || finishEmailInFlight) return;
       const recap = getFinishSessionRecap();
       const details = [];
       if (recap.mathProblems) details.push(`${recap.mathProblems} math problem${recap.mathProblems === 1 ? "" : "s"}`);
       if (recap.writingPieces) details.push(`${recap.writingPieces} writing piece${recap.writingPieces === 1 ? "" : "s"}`);
-      els.finishSessionRecap.textContent = `You practiced for ${recap.minutes} minutes and completed ${recap.lessons} lesson${recap.lessons === 1 ? "" : "s"}.${details.length ? " That included " + details.join(" and ") + "." : ""}`;
+      els.finishSessionRecap.textContent = `You actively practiced for ${recap.minutes} minutes and earned ${recap.workPoints} work points.${details.length ? " That included " + details.join(" and ") + "." : ""}`;
       els.dadMessage.value = "";
       els.dadMessageCount.textContent = "0 / 500";
       els.finishSessionModal.classList.add("open");
@@ -2875,8 +3028,8 @@
     }
 
     async function finishSessionAndEmail(personalMessage = "") {
-      const elapsedSeconds = Math.floor((Date.now() - sessionStart) / 1000);
-      if (elapsedSeconds < MANUAL_FINISH_SECONDS || finishEmailInFlight) return;
+      const progress = getSessionProgress();
+      if (lessonBlockActiveSeconds < MANUAL_FINISH_SECONDS || progress.workPoints < REQUIRED_WORK_POINTS || finishEmailInFlight) return;
       if (writingSession && !writingSession.saved && els.writingResponse.value.trim()) {
         saveWriting();
         if (writingSession && !writingSession.saved) {
@@ -2900,10 +3053,7 @@
         els.finishSessionModal.classList.remove("open");
         mathSession = null;
         writingSession = null;
-        lessonBlockActiveSeconds = 0;
-        sessionStart = Date.now();
-        lastInteractionAt = Date.now();
-        lastActivityTickAt = Date.now();
+        resetSessionProgress();
         els.mathPracticePanel.classList.add("hidden");
         els.writingPracticePanel.classList.add("hidden");
         renderAll();
@@ -2928,6 +3078,7 @@
 
       if (idleMs <= ACTIVE_GRACE_MS) {
         lessonBlockActiveSeconds += elapsedSeconds;
+        getSessionProgress().activeSeconds = lessonBlockActiveSeconds;
         addTime(elapsedSeconds);
         if (activeView === "home") renderHome();
         return;
@@ -2935,6 +3086,7 @@
 
       if (
         lessonBlockActiveSeconds >= getRequiredActiveSeconds() &&
+        getSessionProgress().workPoints >= REQUIRED_WORK_POINTS &&
         idleMs >= getAutoEmailIdleMs() &&
         now - lastAutoEmailAttemptAt >= AUTO_EMAIL_RETRY_MS &&
         !autoEmailInFlight
@@ -2945,8 +3097,7 @@
           ? await sendEmailSummary({ silent: true, auto: true, summaryType: "session" })
           : false;
         if (sent) {
-          lessonBlockActiveSeconds = 0;
-          sessionStart = Date.now();
+          resetSessionProgress();
         }
         autoEmailInFlight = false;
         if (!sent && parentUnlocked) {
@@ -3010,6 +3161,9 @@
       state.profiles[profile.id] = profile;
       currentProfileId = profile.id;
       state.currentProfileId = profile.id;
+      mathSession = null;
+      writingSession = null;
+      restoreSessionProgress();
       closeProfileModal();
       saveState();
       renderAll();
@@ -3021,6 +3175,9 @@
       const fresh = createProfile(profile.name);
       fresh.id = profile.id;
       state.profiles[profile.id] = fresh;
+      mathSession = null;
+      writingSession = null;
+      restoreSessionProgress();
       saveState();
       els.emailPreview.value = "";
       renderAll();
@@ -3033,10 +3190,7 @@
       parentUnlocked = false;
       mathSession = null;
       writingSession = null;
-      lessonBlockActiveSeconds = 0;
-      lastInteractionAt = Date.now();
-      lastActivityTickAt = Date.now();
-      sessionStart = Date.now();
+      restoreSessionProgress();
       saveState();
       els.emailPreview.value = "";
       renderAll();
@@ -3076,10 +3230,7 @@
         state.currentProfileId = currentProfileId;
         mathSession = null;
         writingSession = null;
-        lessonBlockActiveSeconds = 0;
-        sessionStart = Date.now();
-        lastInteractionAt = Date.now();
-        lastActivityTickAt = Date.now();
+        restoreSessionProgress();
         els.mathPracticePanel.classList.add("hidden");
         els.writingPracticePanel.classList.add("hidden");
         els.emailPreview.value = "";
@@ -3137,7 +3288,6 @@
       });
       els.autoEmailDelay.addEventListener("change", () => {
         saveEmailSettings();
-        lessonBlockActiveSeconds = 0;
         lastInteractionAt = Date.now();
         lastActivityTickAt = Date.now();
         renderEmailStatus();
