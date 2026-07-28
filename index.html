@@ -954,10 +954,14 @@
       <div class="session-progress-track"><div class="session-progress-fill" id="sessionTimeFill"></div></div>
     </div>
     <div class="session-requirement">
-      <div class="session-requirement-row"><span>Work completed</span><span id="sessionWorkProgress">0 / 15 points</span></div>
-      <div class="session-progress-track"><div class="session-progress-fill" id="sessionWorkFill"></div></div>
+      <div class="session-requirement-row"><span>Math questions answered</span><span id="sessionMathProgress">0 / 10</span></div>
+      <div class="session-progress-track"><div class="session-progress-fill" id="sessionMathFill"></div></div>
     </div>
-    <p class="session-needed" id="sessionNeeded">Still needed: 15:00 active time and 15 points</p>
+    <div class="session-requirement">
+      <div class="session-requirement-row"><span>Writing prompts completed</span><span id="sessionWritingProgress">0 / 1</span></div>
+      <div class="session-progress-track"><div class="session-progress-fill" id="sessionWritingFill"></div></div>
+    </div>
+    <p class="session-needed" id="sessionNeeded">Still needed: 15:00 active time, 10 math questions, and 1 writing prompt</p>
     <button class="session-finish-btn" id="finishAndEmailBtn" type="button" disabled>I'm Done — Email Dad</button>
   </aside>
   <div class="app">
@@ -1524,7 +1528,8 @@
     let finishEmailInFlight = false;
     const ACTIVE_GRACE_MS = 60000;
     const MANUAL_FINISH_SECONDS = 15 * 60;
-    const REQUIRED_WORK_POINTS = 15;
+    const REQUIRED_MATH_QUESTIONS = 10;
+    const REQUIRED_WRITING_PROMPTS = 1;
     const MATH_ATTEMPT_POINTS = 1;
     const WRITING_ASSIGNMENT_POINTS = 5;
     const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
@@ -1537,8 +1542,10 @@
       sessionElapsed: document.getElementById("sessionElapsed"),
       sessionTimeProgress: document.getElementById("sessionTimeProgress"),
       sessionTimeFill: document.getElementById("sessionTimeFill"),
-      sessionWorkProgress: document.getElementById("sessionWorkProgress"),
-      sessionWorkFill: document.getElementById("sessionWorkFill"),
+      sessionMathProgress: document.getElementById("sessionMathProgress"),
+      sessionMathFill: document.getElementById("sessionMathFill"),
+      sessionWritingProgress: document.getElementById("sessionWritingProgress"),
+      sessionWritingFill: document.getElementById("sessionWritingFill"),
       sessionNeeded: document.getElementById("sessionNeeded"),
       finishAndEmailBtn: document.getElementById("finishAndEmailBtn"),
       finishSessionModal: document.getElementById("finishSessionModal"),
@@ -1692,6 +1699,7 @@
         mathAttempts: 0,
         mathCorrect: 0,
         writingAssignments: 0,
+        autoEmailSent: false,
         creditedWork: {}
       };
     }
@@ -1873,26 +1881,29 @@
       const shownSeconds = Math.min(activeSeconds, MANUAL_FINISH_SECONDS);
       const minutes = Math.floor(shownSeconds / 60);
       const seconds = shownSeconds % 60;
-      const points = Math.max(0, Number(progress.workPoints) || 0);
+      const mathAttempts = Math.max(0, Number(progress.mathAttempts) || 0);
+      const writingAssignments = Math.max(0, Number(progress.writingAssignments) || 0);
       const remainingSeconds = Math.max(0, MANUAL_FINISH_SECONDS - activeSeconds);
-      const remainingPoints = Math.max(0, REQUIRED_WORK_POINTS - points);
+      const remainingMath = Math.max(0, REQUIRED_MATH_QUESTIONS - mathAttempts);
+      const remainingWriting = Math.max(0, REQUIRED_WRITING_PROMPTS - writingAssignments);
       const timeComplete = remainingSeconds === 0;
-      const workComplete = remainingPoints === 0;
-      const ready = timeComplete && workComplete;
+      const ready = timeComplete && remainingMath === 0 && remainingWriting === 0;
       const timeText = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
       els.sessionElapsed.textContent = `Active ${timeText}`;
       els.sessionTimeProgress.textContent = `${timeText} / 15:00`;
       els.sessionTimeFill.style.width = Math.min(100, (activeSeconds / MANUAL_FINISH_SECONDS) * 100) + "%";
-      els.sessionWorkProgress.textContent = `${points} / ${REQUIRED_WORK_POINTS} points`;
-      els.sessionWorkFill.style.width = Math.min(100, (points / REQUIRED_WORK_POINTS) * 100) + "%";
+      els.sessionMathProgress.textContent = `${mathAttempts} / ${REQUIRED_MATH_QUESTIONS}`;
+      els.sessionMathFill.style.width = Math.min(100, (mathAttempts / REQUIRED_MATH_QUESTIONS) * 100) + "%";
+      els.sessionWritingProgress.textContent = `${writingAssignments} / ${REQUIRED_WRITING_PROMPTS}`;
+      els.sessionWritingFill.style.width = Math.min(100, (writingAssignments / REQUIRED_WRITING_PROMPTS) * 100) + "%";
       if (ready) {
         els.sessionNeeded.textContent = "Session requirements complete!";
-      } else if (remainingSeconds && remainingPoints) {
-        els.sessionNeeded.textContent = `Still needed: ${formatClock(remainingSeconds)} active time and ${remainingPoints} point${remainingPoints === 1 ? "" : "s"}`;
-      } else if (remainingSeconds) {
-        els.sessionNeeded.textContent = `Still needed: ${formatClock(remainingSeconds)} active time`;
       } else {
-        els.sessionNeeded.textContent = `Still needed: ${remainingPoints} point${remainingPoints === 1 ? "" : "s"}`;
+        const needed = [];
+        if (remainingSeconds) needed.push(`${formatClock(remainingSeconds)} active time`);
+        if (remainingMath) needed.push(`${remainingMath} math question${remainingMath === 1 ? "" : "s"}`);
+        if (remainingWriting) needed.push(`${remainingWriting} writing prompt${remainingWriting === 1 ? "" : "s"}`);
+        els.sessionNeeded.textContent = `Still needed: ${needed.join(", ").replace(/, ([^,]*)$/, ", and $1")}`;
       }
       els.sessionFinishCard.classList.toggle("ready", ready);
       els.finishAndEmailBtn.disabled = !ready || finishEmailInFlight;
@@ -2842,10 +2853,9 @@
         `- Total saved time: ${totalTrackedMinutes} minute(s)`,
         "",
         "Session completion:",
-        `- Work points: ${sessionProgress.workPoints} / ${REQUIRED_WORK_POINTS}`,
-        `- Math questions attempted: ${sessionProgress.mathAttempts}`,
+        `- Math questions answered: ${sessionProgress.mathAttempts} / ${REQUIRED_MATH_QUESTIONS}`,
         `- Math accuracy: ${sessionProgress.mathAttempts ? percent(sessionProgress.mathCorrect, sessionProgress.mathAttempts) + "%" : "No math attempts"}`,
-        `- Writing assignments completed: ${sessionProgress.writingAssignments}`,
+        `- Writing prompts completed: ${sessionProgress.writingAssignments} / ${REQUIRED_WRITING_PROMPTS}`,
         "",
         "Math:",
         `- Problems attempted in this range: ${mathTotal}`,
@@ -3008,14 +3018,20 @@
       return { minutes, lessons, mathProblems, writingPieces, workPoints: progress.workPoints };
     }
 
-    function openFinishSessionModal() {
+    function sessionRequirementsComplete(requiredSeconds = MANUAL_FINISH_SECONDS) {
       const progress = getSessionProgress();
-      if (lessonBlockActiveSeconds < MANUAL_FINISH_SECONDS || progress.workPoints < REQUIRED_WORK_POINTS || finishEmailInFlight) return;
+      return lessonBlockActiveSeconds >= requiredSeconds &&
+        progress.mathAttempts >= REQUIRED_MATH_QUESTIONS &&
+        progress.writingAssignments >= REQUIRED_WRITING_PROMPTS;
+    }
+
+    function openFinishSessionModal() {
+      if (!sessionRequirementsComplete() || finishEmailInFlight) return;
       const recap = getFinishSessionRecap();
       const details = [];
       if (recap.mathProblems) details.push(`${recap.mathProblems} math problem${recap.mathProblems === 1 ? "" : "s"}`);
       if (recap.writingPieces) details.push(`${recap.writingPieces} writing piece${recap.writingPieces === 1 ? "" : "s"}`);
-      els.finishSessionRecap.textContent = `You actively practiced for ${recap.minutes} minutes and earned ${recap.workPoints} work points.${details.length ? " That included " + details.join(" and ") + "." : ""}`;
+      els.finishSessionRecap.textContent = `You actively practiced for ${recap.minutes} minutes.${details.length ? " That included " + details.join(" and ") + "." : ""}`;
       els.dadMessage.value = "";
       els.dadMessageCount.textContent = "0 / 500";
       els.finishSessionModal.classList.add("open");
@@ -3028,8 +3044,7 @@
     }
 
     async function finishSessionAndEmail(personalMessage = "") {
-      const progress = getSessionProgress();
-      if (lessonBlockActiveSeconds < MANUAL_FINISH_SECONDS || progress.workPoints < REQUIRED_WORK_POINTS || finishEmailInFlight) return;
+      if (!sessionRequirementsComplete() || finishEmailInFlight) return;
       if (writingSession && !writingSession.saved && els.writingResponse.value.trim()) {
         saveWriting();
         if (writingSession && !writingSession.saved) {
@@ -3072,11 +3087,11 @@
 
     async function trackActivityAndMaybeEmail() {
       const now = Date.now();
-      const elapsedSeconds = Math.max(1, Math.round((now - lastActivityTickAt) / 1000));
+      const elapsedSeconds = Math.max(0, Math.min(2, (now - lastActivityTickAt) / 1000));
       lastActivityTickAt = now;
       const idleMs = now - lastInteractionAt;
 
-      if (idleMs <= ACTIVE_GRACE_MS) {
+      if (!document.hidden && document.hasFocus() && idleMs <= ACTIVE_GRACE_MS) {
         lessonBlockActiveSeconds += elapsedSeconds;
         getSessionProgress().activeSeconds = lessonBlockActiveSeconds;
         addTime(elapsedSeconds);
@@ -3085,10 +3100,10 @@
       }
 
       if (
-        lessonBlockActiveSeconds >= getRequiredActiveSeconds() &&
-        getSessionProgress().workPoints >= REQUIRED_WORK_POINTS &&
+        sessionRequirementsComplete(getRequiredActiveSeconds()) &&
         idleMs >= getAutoEmailIdleMs() &&
         now - lastAutoEmailAttemptAt >= AUTO_EMAIL_RETRY_MS &&
+        !getSessionProgress().autoEmailSent &&
         !autoEmailInFlight
       ) {
         autoEmailInFlight = true;
@@ -3097,7 +3112,8 @@
           ? await sendEmailSummary({ silent: true, auto: true, summaryType: "session" })
           : false;
         if (sent) {
-          resetSessionProgress();
+          getSessionProgress().autoEmailSent = true;
+          saveState();
         }
         autoEmailInFlight = false;
         if (!sent && parentUnlocked) {
@@ -3200,6 +3216,17 @@
     function bindEvents() {
       ["pointerdown", "keydown", "input", "click", "touchstart"].forEach((eventName) => {
         document.addEventListener(eventName, markInteraction, { passive: true });
+      });
+      document.addEventListener("visibilitychange", () => {
+        lastActivityTickAt = Date.now();
+        if (!document.hidden) markInteraction();
+      });
+      window.addEventListener("focus", () => {
+        lastActivityTickAt = Date.now();
+        markInteraction();
+      });
+      window.addEventListener("blur", () => {
+        lastActivityTickAt = Date.now();
       });
       els.finishAndEmailBtn.addEventListener("click", openFinishSessionModal);
       els.cancelFinishSessionBtn.addEventListener("click", closeFinishSessionModal);
@@ -3339,7 +3366,7 @@
     renderAll();
     setInterval(() => {
       trackActivityAndMaybeEmail();
-    }, 15000);
+    }, 1000);
     setInterval(renderSessionFinishControl, 1000);
   </script>
 </body>
