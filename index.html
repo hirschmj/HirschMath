@@ -1523,6 +1523,7 @@
     let lastInteractionAt = Date.now();
     let lessonBlockActiveSeconds = getSessionProgress().activeSeconds;
     let lastActivityTickAt = Date.now();
+    let studentWindowActive = !document.hidden;
     let autoEmailInFlight = false;
     let lastAutoEmailAttemptAt = 0;
     let finishEmailInFlight = false;
@@ -3091,7 +3092,7 @@
       lastActivityTickAt = now;
       const idleMs = now - lastInteractionAt;
 
-      if (!document.hidden && document.hasFocus() && idleMs <= ACTIVE_GRACE_MS) {
+      if (!document.hidden && studentWindowActive && idleMs <= ACTIVE_GRACE_MS) {
         lessonBlockActiveSeconds += elapsedSeconds;
         getSessionProgress().activeSeconds = lessonBlockActiveSeconds;
         addTime(elapsedSeconds);
@@ -3219,14 +3220,17 @@
       });
       document.addEventListener("visibilitychange", () => {
         lastActivityTickAt = Date.now();
-        if (!document.hidden) markInteraction();
+        studentWindowActive = !document.hidden;
+        if (studentWindowActive) markInteraction();
       });
       window.addEventListener("focus", () => {
         lastActivityTickAt = Date.now();
+        studentWindowActive = true;
         markInteraction();
       });
       window.addEventListener("blur", () => {
         lastActivityTickAt = Date.now();
+        studentWindowActive = false;
       });
       els.finishAndEmailBtn.addEventListener("click", openFinishSessionModal);
       els.cancelFinishSessionBtn.addEventListener("click", closeFinishSessionModal);
