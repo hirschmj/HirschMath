@@ -755,7 +755,7 @@
 
     .session-finish-card {
       position: fixed;
-      bottom: 16px;
+      top: 16px;
       right: 16px;
       z-index: 120;
       width: min(230px, calc(100vw - 32px));
@@ -765,41 +765,6 @@
       background: #fff1f1;
       box-shadow: 0 12px 30px rgba(95, 15, 15, 0.3);
       text-align: center;
-    }
-
-    .session-collapse-btn {
-      width: 100%;
-      min-height: 50px;
-      margin-bottom: 8px;
-      border: 0;
-      border-radius: 12px;
-      padding: 9px 12px;
-      color: #fff;
-      background: #3577e5;
-      font-size: 1rem;
-      font-weight: 900;
-      box-shadow: 0 5px 0 #1d4f9e;
-      cursor: pointer;
-    }
-
-    .session-finish-card.collapsed {
-      width: 190px;
-      padding: 0;
-      border: 0;
-      background: transparent;
-      box-shadow: none;
-    }
-
-    .session-finish-card.collapsed > :not(.session-collapse-btn) {
-      display: none;
-    }
-
-    .session-finish-card.collapsed .session-collapse-btn {
-      margin-bottom: 0;
-      min-height: 58px;
-      border-radius: 18px;
-      font-size: 1.08rem;
-      box-shadow: 0 6px 0 #1d4f9e, 0 10px 24px rgba(29, 79, 158, 0.28);
     }
 
     .session-finish-label {
@@ -905,12 +870,6 @@
       box-shadow: 0 5px 0 #0d5a30;
     }
 
-    .session-finish-card.collapsed {
-      border: 0;
-      background: transparent;
-      box-shadow: none;
-    }
-
     .hidden {
       display: none !important;
     }
@@ -959,7 +918,7 @@
 
     @media (max-width: 620px) {
       .session-finish-card {
-        bottom: 8px;
+        top: 8px;
         right: 8px;
         width: 190px;
       }
@@ -987,8 +946,7 @@
   </style>
 </head>
 <body>
-  <aside class="session-finish-card collapsed" id="sessionFinishCard" aria-label="Current practice session">
-    <button class="session-collapse-btn" id="sessionCollapseBtn" type="button" aria-expanded="false" aria-controls="sessionFinishCard">Email Dad</button>
+  <aside class="session-finish-card" id="sessionFinishCard" aria-label="Current practice session">
     <span class="session-finish-label">Current session</span>
     <time class="session-finish-time" id="sessionElapsed" aria-live="off">Active 00:00</time>
     <div class="session-requirement">
@@ -1202,7 +1160,6 @@
               <label>
                 Parent email address
                 <input id="parentEmail" class="field" type="email" placeholder="parent@example.com" />
-                <span class="small">Saved only in this browser with the student history.</span>
               </label>
               <label>
                 Summary type
@@ -1583,7 +1540,6 @@
       profileSelect: document.getElementById("profileSelect"),
       addProfileBtn: document.getElementById("addProfileBtn"),
       sessionFinishCard: document.getElementById("sessionFinishCard"),
-      sessionCollapseBtn: document.getElementById("sessionCollapseBtn"),
       sessionElapsed: document.getElementById("sessionElapsed"),
       sessionTimeProgress: document.getElementById("sessionTimeProgress"),
       sessionTimeFill: document.getElementById("sessionTimeFill"),
@@ -1681,7 +1637,7 @@
       const firstProfile = createProfile("Student");
       return {
         currentProfileId: firstProfile.id,
-        parentEmail: "",
+        parentEmail: "hirschmj@gmail.com",
         emailJs: {
           publicKey: "vY4IDyQZY_SI2nXfZ",
           serviceId: "service_pfowsjs",
@@ -1767,7 +1723,7 @@
 
     function migrateState(saved) {
       saved.parentPin = saved.parentPin || "1234";
-      saved.parentEmail = saved.parentEmail || "";
+      saved.parentEmail = saved.parentEmail || "hirschmj@gmail.com";
       saved.emailJs = Object.assign({
         publicKey: "vY4IDyQZY_SI2nXfZ",
         serviceId: "service_pfowsjs",
@@ -1952,17 +1908,8 @@
       }
       els.sessionFinishCard.classList.toggle("ready", ready);
       els.finishAndEmailBtn.disabled = !ready || finishEmailInFlight;
-      const parentEmailReady = Boolean(state.parentEmail);
-      els.finishAndEmailBtn.textContent = finishEmailInFlight
-        ? "Sending Summary..."
-        : parentEmailReady
-          ? "I'm Done — Email Dad"
-          : "Dad Setup Needed — Add Email";
-      els.finishAndEmailBtn.title = ready
-        ? parentEmailReady
-          ? "End this session and email Dad"
-          : "Dad needs to unlock the Parent area and add an email address."
-        : els.sessionNeeded.textContent;
+      els.finishAndEmailBtn.textContent = finishEmailInFlight ? "Sending Summary..." : "I'm Done — Email Dad";
+      els.finishAndEmailBtn.title = ready ? "End this session and email Dad" : els.sessionNeeded.textContent;
     }
 
     function renderProfiles() {
@@ -3081,11 +3028,6 @@
 
     function openFinishSessionModal() {
       if (!sessionRequirementsComplete() || finishEmailInFlight) return;
-      if (!state.parentEmail) {
-        alert("Dad needs to unlock the Parent area and add an email address before a summary can be sent.");
-        showView("parent");
-        return;
-      }
       const recap = getFinishSessionRecap();
       const details = [];
       if (recap.mathProblems) details.push(`${recap.mathProblems} math problem${recap.mathProblems === 1 ? "" : "s"}`);
@@ -3290,11 +3232,6 @@
         lastActivityTickAt = Date.now();
         studentWindowActive = false;
       });
-      els.sessionCollapseBtn.addEventListener("click", () => {
-        const collapsed = els.sessionFinishCard.classList.toggle("collapsed");
-        els.sessionCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
-        els.sessionCollapseBtn.textContent = collapsed ? "Email Dad" : "Collapse Email Dad";
-      });
       els.finishAndEmailBtn.addEventListener("click", openFinishSessionModal);
       els.cancelFinishSessionBtn.addEventListener("click", closeFinishSessionModal);
       els.confirmFinishSessionBtn.addEventListener("click", () => {
@@ -3366,10 +3303,6 @@
           parentUnlocked = true;
           els.pinInput.value = "";
           renderParent();
-          if (!state.parentEmail) {
-            alert("First-time setup: enter the parent email address. It will be saved only in this browser with the student history.");
-            els.parentEmail.focus();
-          }
         } else {
           alert("That PIN did not match. The default is 1234 unless changed in the code.");
         }
@@ -3380,7 +3313,6 @@
       });
       els.parentEmail.addEventListener("input", () => {
         saveEmailSettings();
-        renderSessionFinishControl();
       });
       [els.emailJsPublicKey, els.emailJsServiceId, els.emailJsTemplateId, els.siteUrl].forEach((input) => {
         input.addEventListener("input", saveEmailSettings);
