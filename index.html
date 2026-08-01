@@ -1001,14 +1001,18 @@
       <div class="session-progress-track"><div class="session-progress-fill" id="sessionTimeFill"></div></div>
     </div>
     <div class="session-requirement">
-      <div class="session-requirement-row"><span>Math questions answered</span><span id="sessionMathProgress">0 / 10</span></div>
+      <div class="session-requirement-row"><span>Work points</span><span id="sessionWorkProgress">0 / 15</span></div>
+      <div class="session-progress-track"><div class="session-progress-fill" id="sessionWorkFill"></div></div>
+    </div>
+    <div class="session-requirement">
+      <div class="session-requirement-row"><span>Example: math</span><span id="sessionMathProgress">0 / 20</span></div>
       <div class="session-progress-track"><div class="session-progress-fill" id="sessionMathFill"></div></div>
     </div>
     <div class="session-requirement">
-      <div class="session-requirement-row"><span>Writing prompts completed</span><span id="sessionWritingProgress">0 / 1</span></div>
+      <div class="session-requirement-row"><span>Example: writing</span><span id="sessionWritingProgress">0 / 3</span></div>
       <div class="session-progress-track"><div class="session-progress-fill" id="sessionWritingFill"></div></div>
     </div>
-    <p class="session-needed" id="sessionNeeded">Still needed: 15:00 active time, 10 math questions, and 1 writing prompt</p>
+    <p class="session-needed" id="sessionNeeded">Finish with 15:00 active time plus 15 points, or earn 35 points to finish early.</p>
     <button class="session-finish-btn" id="finishAndEmailBtn" type="button" disabled>I'm Done — Email Dad</button>
   </aside>
   <div class="app">
@@ -1368,7 +1372,7 @@
         title: "Paragraph Writing",
         icon: "¶",
         description: "Write one organized paragraph with a main idea and details.",
-        goal: "Write at least 5 sentences."
+        goal: "Write at least 5 sentences and 45 words."
       },
       {
         id: "opinion",
@@ -1396,7 +1400,7 @@
         title: "Stronger Word Choice",
         icon: "A",
         description: "Replace plain words with precise, vivid language.",
-        goal: "Use at least 3 stronger words."
+        goal: "Replace the plain words with more exact words."
       }
     ];
 
@@ -1577,8 +1581,10 @@
     let finishEmailInFlight = false;
     const ACTIVE_GRACE_MS = 60000;
     const MANUAL_FINISH_SECONDS = 15 * 60;
-    const REQUIRED_MATH_QUESTIONS = 10;
-    const REQUIRED_WRITING_PROMPTS = 1;
+    const REQUIRED_WORK_POINTS = 15;
+    const EARLY_FINISH_POINTS = 35;
+    const EARLY_FINISH_MATH = 20;
+    const EARLY_FINISH_WRITING = 3;
     const MATH_ATTEMPT_POINTS = 1;
     const WRITING_ASSIGNMENT_POINTS = 5;
     const AUTO_EMAIL_IDLE_MS = 5 * 60 * 1000;
@@ -1592,6 +1598,8 @@
       sessionElapsed: document.getElementById("sessionElapsed"),
       sessionTimeProgress: document.getElementById("sessionTimeProgress"),
       sessionTimeFill: document.getElementById("sessionTimeFill"),
+      sessionWorkProgress: document.getElementById("sessionWorkProgress"),
+      sessionWorkFill: document.getElementById("sessionWorkFill"),
       sessionMathProgress: document.getElementById("sessionMathProgress"),
       sessionMathFill: document.getElementById("sessionMathFill"),
       sessionWritingProgress: document.getElementById("sessionWritingProgress"),
@@ -1743,6 +1751,7 @@
 
     function createSessionProgress() {
       return {
+        sessionId: makeId(),
         startedAt: Date.now(),
         activeSeconds: 0,
         workPoints: 0,
@@ -1791,7 +1800,11 @@
         profile.todaySeconds = profile.todaySeconds || 0;
         profile.activities = profile.activities || [];
         profile.writingHistory = profile.writingHistory || [];
-        profile.sessionProgress = Object.assign(createSessionProgress(), profile.sessionProgress || {});
+        const previousSessionProgress = profile.sessionProgress || {};
+        profile.sessionProgress = Object.assign(createSessionProgress(), previousSessionProgress);
+        if (!previousSessionProgress.sessionId) {
+          profile.sessionProgress.sessionId = `session_${profile.sessionProgress.startedAt || Date.now()}`;
+        }
         profile.sessionProgress.creditedWork = profile.sessionProgress.creditedWork || {};
         profile.sessionProgress.usedExercises = profile.sessionProgress.usedExercises || {};
         profile.math = profile.math || {};
@@ -1823,11 +1836,35 @@
     }
 
     function saveState() {
+      mergeLatestSessionProgress();
       const profile = getProfile();
       if (profile) {
         profile.lastActive = new Date().toISOString();
       }
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    function mergeLatestSessionProgress() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const latest = JSON.parse(raw);
+        const latestProfile = latest.profiles && latest.profiles[currentProfileId];
+        const current = getProfile() && getProfile().sessionProgress;
+        const incoming = latestProfile && latestProfile.sessionProgress;
+        if (!current || !incoming || current.sessionId !== incoming.sessionId) return;
+        current.startedAt = Math.min(Number(current.startedAt) || Date.now(), Number(incoming.startedAt) || Date.now());
+        current.activeSeconds = Math.max(Number(current.activeSeconds) || 0, Number(incoming.activeSeconds) || 0);
+        current.workPoints = Math.max(Number(current.workPoints) || 0, Number(incoming.workPoints) || 0);
+        current.mathAttempts = Math.max(Number(current.mathAttempts) || 0, Number(incoming.mathAttempts) || 0);
+        current.mathCorrect = Math.max(Number(current.mathCorrect) || 0, Number(incoming.mathCorrect) || 0);
+        current.writingAssignments = Math.max(Number(current.writingAssignments) || 0, Number(incoming.writingAssignments) || 0);
+        current.creditedWork = Object.assign({}, incoming.creditedWork || {}, current.creditedWork || {});
+        current.usedExercises = Object.assign({}, incoming.usedExercises || {}, current.usedExercises || {});
+        lessonBlockActiveSeconds = Math.max(lessonBlockActiveSeconds || 0, current.activeSeconds);
+      } catch (error) {
+        // Keep the current in-memory state if another tab is between writes.
+      }
     }
 
     function getProfile() {
@@ -1858,6 +1895,7 @@
     }
 
     function exerciseUsed(type, skillId) {
+      mergeLatestSessionProgress();
       return Boolean(getSessionProgress().usedExercises[exerciseKey(type, skillId)]);
     }
 
@@ -1867,6 +1905,7 @@
     }
 
     function creditSessionWork(workId, points, type, correct = false) {
+      mergeLatestSessionProgress();
       const progress = getSessionProgress();
       if (!workId || progress.creditedWork[workId]) return false;
       progress.creditedWork[workId] = true;
@@ -1948,27 +1987,33 @@
       const seconds = shownSeconds % 60;
       const mathAttempts = Math.max(0, Number(progress.mathAttempts) || 0);
       const writingAssignments = Math.max(0, Number(progress.writingAssignments) || 0);
+      const workPoints = Math.max(0, Number(progress.workPoints) || 0);
       const remainingSeconds = Math.max(0, MANUAL_FINISH_SECONDS - activeSeconds);
-      const remainingMath = Math.max(0, REQUIRED_MATH_QUESTIONS - mathAttempts);
-      const remainingWriting = Math.max(0, REQUIRED_WRITING_PROMPTS - writingAssignments);
+      const remainingPoints = Math.max(0, REQUIRED_WORK_POINTS - workPoints);
+      const remainingEarlyPoints = Math.max(0, EARLY_FINISH_POINTS - workPoints);
       const timeComplete = remainingSeconds === 0;
-      const ready = timeComplete && remainingMath === 0 && remainingWriting === 0;
+      const normalComplete = timeComplete && remainingPoints === 0;
+      const earlyComplete = remainingEarlyPoints === 0;
+      const ready = normalComplete || earlyComplete;
       const timeText = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
       els.sessionElapsed.textContent = `Active ${timeText}`;
       els.sessionTimeProgress.textContent = `${timeText} / 15:00`;
       els.sessionTimeFill.style.width = Math.min(100, (activeSeconds / MANUAL_FINISH_SECONDS) * 100) + "%";
-      els.sessionMathProgress.textContent = `${mathAttempts} / ${REQUIRED_MATH_QUESTIONS}`;
-      els.sessionMathFill.style.width = Math.min(100, (mathAttempts / REQUIRED_MATH_QUESTIONS) * 100) + "%";
-      els.sessionWritingProgress.textContent = `${writingAssignments} / ${REQUIRED_WRITING_PROMPTS}`;
-      els.sessionWritingFill.style.width = Math.min(100, (writingAssignments / REQUIRED_WRITING_PROMPTS) * 100) + "%";
+      els.sessionWorkProgress.textContent = `${workPoints} / ${REQUIRED_WORK_POINTS}`;
+      els.sessionWorkFill.style.width = Math.min(100, (workPoints / REQUIRED_WORK_POINTS) * 100) + "%";
+      els.sessionMathProgress.textContent = `${mathAttempts} / ${EARLY_FINISH_MATH}`;
+      els.sessionMathFill.style.width = Math.min(100, (mathAttempts / EARLY_FINISH_MATH) * 100) + "%";
+      els.sessionWritingProgress.textContent = `${writingAssignments} / ${EARLY_FINISH_WRITING}`;
+      els.sessionWritingFill.style.width = Math.min(100, (writingAssignments / EARLY_FINISH_WRITING) * 100) + "%";
       if (ready) {
-        els.sessionNeeded.textContent = "Session requirements complete!";
+        els.sessionNeeded.textContent = earlyComplete && !normalComplete
+          ? `Early finish unlocked with ${workPoints} points!`
+          : "Session requirements complete!";
       } else {
-        const needed = [];
-        if (remainingSeconds) needed.push(`${formatClock(remainingSeconds)} active time`);
-        if (remainingMath) needed.push(`${remainingMath} math question${remainingMath === 1 ? "" : "s"}`);
-        if (remainingWriting) needed.push(`${remainingWriting} writing prompt${remainingWriting === 1 ? "" : "s"}`);
-        els.sessionNeeded.textContent = `Still needed: ${needed.join(", ").replace(/, ([^,]*)$/, ", and $1")}`;
+        const normalNeeds = [];
+        if (remainingSeconds) normalNeeds.push(`${formatClock(remainingSeconds)} active time`);
+        if (remainingPoints) normalNeeds.push(`${remainingPoints} point${remainingPoints === 1 ? "" : "s"}`);
+        els.sessionNeeded.textContent = `Normal finish: ${normalNeeds.join(" + ")}. Early finish: ${remainingEarlyPoints} more point${remainingEarlyPoints === 1 ? "" : "s"} (20 math + 3 writing = 35).`;
       }
       els.sessionFinishCard.classList.toggle("ready", ready);
       els.finishAndEmailBtn.disabled = !ready || finishEmailInFlight;
@@ -2092,6 +2137,8 @@
         return;
       }
       markExerciseUsed("math", skillId);
+      renderMath();
+      renderRecommendations(getProfile());
       showView("math");
       const profile = getProfile();
       mathSession = {
@@ -2544,6 +2591,8 @@
         return;
       }
       markExerciseUsed("writing", skillId);
+      renderWriting();
+      renderRecommendations(getProfile());
       showView("writing");
       const promptData = getWritingPrompt(skillId);
       writingSession = {
@@ -2582,17 +2631,18 @@
       return randomFrom(levelPrompts.length ? levelPrompts : prompts);
     }
 
-    function renderWritingChecklist(skillId) {
-      const checklists = {
-        sentenceCorrection: ["Capital letters are correct", "Punctuation is correct", "The sentence sounds complete"],
-        paragraph: ["Clear topic sentence", "At least 3 supporting details", "Ending sentence wraps it up"],
-        opinion: ["Opinion is stated clearly", "At least 2 reasons are included", "Ending reminds the reader of your opinion"],
-        narrative: ["Characters and setting are clear", "Events happen in order", "Ending solves or reflects on the problem"],
-        informational: ["Topic is introduced", "Facts and examples teach the reader", "Ideas are grouped in a clear order"],
-        vocabulary: ["Plain words are replaced", "New words fit the meaning", "The sentence still sounds natural"]
-      };
-      els.writingChecklist.innerHTML = checklists[skillId].map((item) => `
-        <label class="check-item"><input type="checkbox" /> <span>${item}</span></label>
+    function renderWritingChecklist(skillId, result) {
+      if (skillId === "sentenceCorrection") {
+        const correction = result || evaluateSentenceCorrection(els.writingResponse.value.trim(), writingSession.promptData);
+        renderCorrectionChecklist(correction);
+        return;
+      }
+      const evaluation = result || evaluateWritingQuality(els.writingResponse.value.trim(), skillId);
+      els.writingChecklist.innerHTML = evaluation.checks.map((check) => `
+        <div class="check-item ${check.pass ? "found" : "missing"}">
+          <input type="checkbox" ${check.pass ? "checked" : ""} disabled />
+          <span>${check.label}</span>
+        </div>
       `).join("");
     }
 
@@ -2609,33 +2659,18 @@
           els.saveWritingBtn.textContent = writingSession.skillId === "sentenceCorrection" ? "Check Answer" : "Save Writing";
         }
       }
-      let message = "Start with your main idea, then add details.";
-      let className = "feedback";
       if (writingSession && writingSession.skillId === "sentenceCorrection") {
-        message = "Fix every issue you can find, then check your correction.";
-        if (text) {
-          message = "Good. Check capitals, punctuation, verb tense, and word order before submitting.";
-          className = "feedback try";
-        }
-        els.writingFeedback.className = className;
-        els.writingFeedback.textContent = message;
+        const result = evaluateSentenceCorrection(text, writingSession.promptData);
+        renderCorrectionChecklist(result);
+        els.writingFeedback.className = result.pass ? "feedback good" : text ? "feedback try" : "feedback";
+        els.writingFeedback.textContent = result.message;
         return;
       }
-      if (words >= 80 || sentences >= 6) {
-        message = "This has strong length. Now check for clear order, vivid words, and punctuation.";
-        className = "feedback good";
-      } else if (words >= 35 || sentences >= 3) {
-        message = "Good start. Add one more specific detail or example to make it stronger.";
-        className = "feedback try";
-      } else if (words > 0) {
-        message = "Nice opening. Keep going with details, reasons, or action.";
-        className = "feedback try";
-      }
-      if (/\b(good|bad|nice|thing|stuff|went)\b/i.test(text)) {
-        message += " Try replacing a plain word with something more exact.";
-      }
-      els.writingFeedback.className = className;
-      els.writingFeedback.textContent = message;
+      if (!writingSession) return;
+      const result = evaluateWritingQuality(text, writingSession.skillId);
+      renderWritingChecklist(writingSession.skillId, result);
+      els.writingFeedback.className = result.pass ? "feedback good" : text ? "feedback try" : "feedback";
+      els.writingFeedback.textContent = result.message;
     }
 
     function saveWriting() {
@@ -2664,11 +2699,6 @@
         }
         els.writingFeedback.className = "feedback good";
         els.writingFeedback.textContent = result.message;
-      }
-      if (text.length < 20) {
-        els.writingFeedback.className = "feedback no";
-        els.writingFeedback.textContent = "Write a little more before saving so your progress report has something useful.";
-        return;
       }
       const profile = getProfile();
       const words = text.split(/\s+/).filter(Boolean).length;
@@ -2767,24 +2797,64 @@
       const lower = text.toLowerCase();
       const hasBecause = /\bbecause\b|\bfor example\b|\bfor instance\b|\bone reason\b/.test(lower);
       const hasOrder = /\bfirst\b|\bnext\b|\bthen\b|\bfinally\b|\bin addition\b|\balso\b/.test(lower);
-      const plainWords = (lower.match(/\b(good|bad|nice|thing|stuff|went|big|pretty|happy)\b/g) || []).length;
-      const vividWords = (lower.match(/\b(enormous|sprinted|dashed|delicious|comfortable|gloomy|thrilled|sparkling|stomped|drifted|soared|whispered|crashed|brilliant|carefully|nervously)\b/g) || []).length;
-      if (skillId === "informational") {
-        if (sentences < 4 || words < 55) return { pass: false, message: "Add more teaching: aim for at least 4 sentences and 55 words." };
-        if (!hasOrder) return { pass: false, message: "Add order words like first, next, also, or finally so the explanation is easier to follow." };
-        if (!hasBecause) return { pass: false, message: "Add facts or examples with phrases like for example, because, or one reason." };
-      } else if (skillId === "vocabulary") {
-        if (words < 8) return { pass: false, message: "Write a complete improved sentence before saving." };
-        if (plainWords > 0 && vividWords < 2) return { pass: false, message: "Try replacing at least two plain words with more exact or vivid words." };
+      const hasEndingPunctuation = /[.!?][\"']?$/.test(text);
+      const startsWithCapital = /^[A-Z\"']/.test(text);
+      let checks = [];
+
+      if (skillId === "paragraph") {
+        checks = [
+          { label: `At least 5 complete sentences (${sentences}/5)`, pass: sentences >= 5 },
+          { label: `At least 45 words (${words}/45)`, pass: words >= 45 },
+          { label: "Ends with punctuation", pass: hasEndingPunctuation }
+        ];
       } else if (skillId === "opinion") {
-        if (sentences < 4 || !hasBecause) return { pass: false, message: "State your opinion and add at least two reasons or examples." };
+        const opinionStated = /\bi think\b|\bi believe\b|\bin my opinion\b|\bshould\b|\bshould not\b/.test(lower);
+        const reasonSignals = (lower.match(/\bbecause\b|\bone reason\b|\banother reason\b|\bsecond(?:ly)?\b|\balso\b|\bfor example\b/g) || []).length;
+        checks = [
+          { label: "Opinion is stated clearly", pass: opinionStated },
+          { label: `At least 2 reasons or examples (${Math.min(reasonSignals, 2)}/2)`, pass: reasonSignals >= 2 },
+          { label: `At least 4 complete sentences (${sentences}/4)`, pass: sentences >= 4 },
+          { label: "Ends with punctuation", pass: hasEndingPunctuation }
+        ];
       } else if (skillId === "narrative") {
-        if (sentences < 5 || !/\bthen\b|\bsuddenly\b|\bafter\b|\bfinally\b/.test(lower)) return { pass: false, message: "Add story sequence and a clear beginning, middle, and ending." };
-      } else if (sentences < 4 || words < 45) {
-        return { pass: false, message: "Build this into a fuller paragraph with at least 4 sentences and specific details." };
+        const hasSequence = /\bthen\b|\bsuddenly\b|\bafter\b|\bnext\b|\bfinally\b/.test(lower);
+        checks = [
+          { label: `At least 5 complete sentences (${sentences}/5)`, pass: sentences >= 5 },
+          { label: "Uses a sequence word such as then, after, or finally", pass: hasSequence },
+          { label: "Ends with punctuation", pass: hasEndingPunctuation }
+        ];
+      } else if (skillId === "informational") {
+        checks = [
+          { label: `At least 4 complete sentences (${sentences}/4)`, pass: sentences >= 4 },
+          { label: `At least 55 words (${words}/55)`, pass: words >= 55 },
+          { label: "Uses an order word such as first, next, also, or finally", pass: hasOrder },
+          { label: "Includes a fact or example signal such as because or for example", pass: hasBecause },
+          { label: "Ends with punctuation", pass: hasEndingPunctuation }
+        ];
+      } else if (skillId === "vocabulary") {
+        const original = writingSession ? writingSession.prompt.replace(/^.*?:\s*/, "").toLowerCase() : "";
+        const targetCandidates = ["big", "went", "fast", "good", "nice", "happy", "pretty", "bad", "loud", "walked", "slowly", "dark", "hard"];
+        const targets = targetCandidates.filter((word) => new RegExp(`\\b${word}\\b`).test(original));
+        const remainingTargets = targets.filter((word) => new RegExp(`\\b${word}\\b`).test(lower));
+        const changed = Boolean(text) && normalizeSentence(text) !== normalizeSentence(original);
+        checks = [
+          { label: `Complete revised sentence (${words} words)`, pass: words >= 6 && sentences >= 1 },
+          { label: "Starts with a capital letter", pass: startsWithCapital },
+          { label: "Ends with punctuation", pass: hasEndingPunctuation },
+          { label: remainingTargets.length ? `Replace: ${remainingTargets.join(", ")}` : "Plain words were replaced", pass: targets.length > 0 && remainingTargets.length === 0 && changed }
+        ];
       }
-      if (plainWords >= 3) return { pass: false, message: "A few words are still plain. Replace words like good, bad, nice, thing, stuff, went, big, or pretty." };
-      return { pass: true, message: "This is ready to save. It has enough detail for a useful progress record." };
+
+      const missing = checks.filter((check) => !check.pass);
+      if (!text) return { pass: false, checks, message: "Start your response. The checklist will update as you write." };
+      if (missing.length) {
+        return {
+          pass: false,
+          checks,
+          message: `Before saving, fix ${missing.length} item${missing.length === 1 ? "" : "s"}: ${missing.map((check) => check.label).join("; ")}.`
+        };
+      }
+      return { pass: true, checks, message: "Everything on the checklist is complete. This is ready to save." };
     }
 
     function renderDashboard() {
@@ -2943,9 +3013,12 @@
         `- Total saved time: ${totalTrackedMinutes} minute(s)`,
         "",
         "Session completion:",
-        `- Math questions answered: ${sessionProgress.mathAttempts} / ${REQUIRED_MATH_QUESTIONS}`,
+        `- Work points earned: ${sessionProgress.workPoints} / ${REQUIRED_WORK_POINTS} for a normal finish`,
+        `- Early-finish points: ${sessionProgress.workPoints} / ${EARLY_FINISH_POINTS}`,
+        `- Math questions answered: ${sessionProgress.mathAttempts}`,
         `- Math accuracy: ${sessionProgress.mathAttempts ? percent(sessionProgress.mathCorrect, sessionProgress.mathAttempts) + "%" : "No math attempts"}`,
-        `- Writing prompts completed: ${sessionProgress.writingAssignments} / ${REQUIRED_WRITING_PROMPTS}`,
+        `- Writing prompts completed: ${sessionProgress.writingAssignments}`,
+        `- Completion path: ${sessionProgress.workPoints >= EARLY_FINISH_POINTS ? "Early finish by points" : lessonBlockActiveSeconds >= MANUAL_FINISH_SECONDS && sessionProgress.workPoints >= REQUIRED_WORK_POINTS ? "Active time plus work points" : "In progress"}`,
         "",
         "Math:",
         `- Problems attempted in this range: ${mathTotal}`,
@@ -3110,9 +3183,10 @@
 
     function sessionRequirementsComplete(requiredSeconds = MANUAL_FINISH_SECONDS) {
       const progress = getSessionProgress();
-      return lessonBlockActiveSeconds >= requiredSeconds &&
-        progress.mathAttempts >= REQUIRED_MATH_QUESTIONS &&
-        progress.writingAssignments >= REQUIRED_WRITING_PROMPTS;
+      const normalComplete = lessonBlockActiveSeconds >= requiredSeconds &&
+        progress.workPoints >= REQUIRED_WORK_POINTS;
+      const earlyComplete = progress.workPoints >= EARLY_FINISH_POINTS;
+      return normalComplete || earlyComplete;
     }
 
     function openFinishSessionModal() {
@@ -3126,7 +3200,10 @@
       const details = [];
       if (recap.mathProblems) details.push(`${recap.mathProblems} math problem${recap.mathProblems === 1 ? "" : "s"}`);
       if (recap.writingPieces) details.push(`${recap.writingPieces} writing piece${recap.writingPieces === 1 ? "" : "s"}`);
-      els.finishSessionRecap.textContent = `You actively practiced for ${recap.minutes} minutes.${details.length ? " That included " + details.join(" and ") + "." : ""}`;
+      const completionPath = recap.workPoints >= EARLY_FINISH_POINTS
+        ? "You unlocked an early finish with enough work points."
+        : "You completed the active-time and work-point goals.";
+      els.finishSessionRecap.textContent = `You actively practiced for ${recap.minutes} minutes and earned ${recap.workPoints} work points. ${completionPath}${details.length ? " That included " + details.join(" and ") + "." : ""}`;
       els.dadMessage.value = "";
       els.dadMessageCount.textContent = "0 / 500";
       els.finishSessionModal.classList.add("open");
@@ -3325,6 +3402,11 @@
       window.addEventListener("blur", () => {
         lastActivityTickAt = Date.now();
         studentWindowActive = false;
+      });
+      window.addEventListener("storage", (event) => {
+        if (event.key !== STORAGE_KEY || !event.newValue) return;
+        mergeLatestSessionProgress();
+        renderAll();
       });
       els.sessionCollapseBtn.addEventListener("click", () => {
         const collapsed = els.sessionFinishCard.classList.toggle("collapsed");

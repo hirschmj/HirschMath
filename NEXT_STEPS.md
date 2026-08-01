@@ -6,9 +6,11 @@ This file collects usability feedback before the next round of behavior changes.
 
 ### Refactor "Stronger Word Choice"
 
+**Status:** Implemented. Validation now checks whether the weak words from the original sentence were actually replaced; it no longer requires matches from a short approved-vocabulary list.
+
 **Feedback:** Requiring three stronger words in a short rewritten sentence is difficult and frustrating for students. The task can feel like guessing which words the app considers "strong."
 
-**Current behavior:**
+**Original problem:**
 
 - The activity goal says, "Use at least 3 stronger words."
 - Prompts usually ask the student to rewrite one short sentence.
@@ -16,7 +18,7 @@ This file collects usability feedback before the next round of behavior changes.
 - A reasonable synonym can be rejected simply because it is not in that list.
 - The feedback asks for at least two replacements in some cases, which does not match the stated goal of three.
 
-**Proposed refactor:**
+**Implemented refactor:**
 
 - Change the goal from an arbitrary count to: **"Replace the plain words with more exact words."**
 - Identify the specific plain words in each prompt, such as `big`, `went`, or `good`.
@@ -65,9 +67,11 @@ Add a parent-accessible way to rename an existing student profile without deleti
 
 ### Clearly show the early-finish option
 
+**Status:** Implemented as a 35-point early-finish path. Twenty math questions plus three writing assignments are the student-facing example, and equivalent point combinations also qualify.
+
 **Feedback:** Students should know that completing **20 math questions and 3 writing assignments** allows them to finish early. If this option is hidden or only becomes apparent near the end, students cannot use it as a motivating goal.
 
-**Proposed refactor:**
+**Implemented refactor:**
 
 - Present two clear ways to complete a session:
   1. Meet the normal active-time and work requirements.

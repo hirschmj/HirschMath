@@ -26,12 +26,18 @@ The next version must require both active practice time and completed work befor
 
 ### Completion requirements
 
-A session is complete only after the student has achieved both of the following:
+A session is complete through either the normal path or the early-finish path.
+
+Normal path:
 
 - At least 15 minutes of active practice time.
 - At least 15 work points.
 
-Reaching only one requirement must not enable the **I'm Done - Email Dad** button.
+Early-finish path:
+
+- At least 35 work points, regardless of active time.
+
+Twenty math questions plus three writing assignments earn 35 points. Any other valid combination worth 35 points is equivalent. The application must clearly show both paths to the student.
 
 ### Work-point values
 
@@ -68,7 +74,11 @@ Active time       11:42 / 15:00
 Work completed       7 / 15 points
 [ progress bar ]
 
-Still needed: 3:18 active time and 8 points
+Early finish         7 / 35 points
+[ progress bar ]
+
+Normal finish: 3:18 active time + 8 points
+Early finish: 28 more points (20 math + 3 writing = 35)
 
 [ I'm Done - Email Dad ]
 ```
@@ -112,7 +122,8 @@ The finish modal and email summary must include:
 
 - The finish button stays disabled at 15 active minutes if the student has fewer than 15 work points.
 - The finish button stays disabled at 15 work points if the student has fewer than 15 active minutes.
-- The finish button becomes enabled as soon as both requirements are met.
+- The finish button becomes enabled as soon as both normal-path requirements are met.
+- The finish button becomes enabled at 35 work points even when active time is below 15 minutes.
 - Fifteen submitted math questions satisfy the work requirement.
 - Three validated and saved writing assignments satisfy the work requirement.
 - Mixed math and writing work satisfies the requirement when its combined value reaches 15 points.
