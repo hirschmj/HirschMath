@@ -1,5 +1,25 @@
 # Summer Lessons Requirements
 
+## Feature requests
+
+### Rotate repeatedly chosen activities
+
+Students should not be able to complete every session by repeatedly choosing the easiest activity or skill. Each math or writing exercise may be selected only once per student session. After it is selected, disable that exercise and label it **Done this session** until the session resets.
+
+The used-exercise list must persist across refreshes, be tracked separately for each student, and reset only when that student's session is successfully completed. The rotation should encourage variety without forcing work that is substantially above the student's current ability level.
+
+### Make writing feedback specific and actionable
+
+When a writing response does not pass validation, the feedback must clearly explain what is preventing it from passing and what the student should change. Avoid vague messages such as "write a little more" when a more precise instruction is available.
+
+Feedback should:
+
+- Identify each unmet requirement, such as the number of additional sentences or words needed, a missing capital letter, missing ending punctuation, or an unchecked revision step.
+- Give a concrete next action, such as "Add two more complete sentences that explain why you chose this answer."
+- Use age-appropriate language and short instructions that a student can act on without adult interpretation.
+- Update after each revision so requirements that have already been satisfied are no longer presented as problems.
+- Preserve encouragement while making it unmistakable what the student must do before the response can be saved and counted as complete.
+
 ## Session completion: time plus actual work
 
 The next version must require both active practice time and completed work before a student can finish a session and email the summary to Dad.
