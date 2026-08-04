@@ -759,17 +759,19 @@
     }
 
     .session-finish-card {
+      --session-progress-color: #a71919;
       position: fixed;
       bottom: 16px;
       right: 16px;
       z-index: 120;
       width: min(230px, calc(100vw - 32px));
       padding: 12px;
-      border: 3px solid #a71919;
+      border: 3px solid var(--session-progress-color);
       border-radius: 16px;
       background: #fff1f1;
       box-shadow: 0 12px 30px rgba(95, 15, 15, 0.3);
       text-align: center;
+      transition: border-color 0.8s ease, box-shadow 0.8s ease;
     }
 
     .session-collapse-btn {
@@ -787,6 +789,19 @@
       cursor: pointer;
     }
 
+    .session-collapse-title,
+    .session-collapse-detail {
+      display: block;
+    }
+
+    .session-collapse-detail {
+      margin-top: 3px;
+      font-size: 0.72rem;
+      font-weight: 750;
+      line-height: 1.15;
+      opacity: 0.94;
+    }
+
     .session-finish-card.collapsed {
       width: 190px;
       padding: 0;
@@ -801,7 +816,7 @@
 
     .session-finish-card.collapsed .session-collapse-btn {
       margin-bottom: 0;
-      min-height: 58px;
+      min-height: 72px;
       border-radius: 18px;
       font-size: 1.08rem;
       box-shadow: 0 6px 0 #1d4f9e, 0 10px 24px rgba(29, 79, 158, 0.28);
@@ -852,7 +867,15 @@
       height: 100%;
       border-radius: inherit;
       background: #c62828;
-      transition: width 0.25s ease;
+      transition: width 0.25s ease, background-color 0.35s ease;
+    }
+
+    .session-progress-track.complete {
+      background: #bfe3ca;
+    }
+
+    .session-progress-track.complete .session-progress-fill {
+      background: #18864a;
     }
 
     .session-needed {
@@ -884,7 +907,7 @@
     }
 
     .session-finish-card.ready {
-      border-color: #15783a;
+      border-color: var(--session-progress-color);
       background: #effbf3;
       box-shadow: 0 12px 30px rgba(15, 91, 43, 0.28);
     }
@@ -894,14 +917,6 @@
     .session-finish-card.ready .session-requirement-row,
     .session-finish-card.ready .session-needed {
       color: #115c2e;
-    }
-
-    .session-finish-card.ready .session-progress-track {
-      background: #bfe3ca;
-    }
-
-    .session-finish-card.ready .session-progress-fill {
-      background: #18864a;
     }
 
     .session-finish-card.ready .session-finish-btn {
@@ -993,7 +1008,10 @@
 </head>
 <body>
   <aside class="session-finish-card collapsed" id="sessionFinishCard" aria-label="Current practice session">
-    <button class="session-collapse-btn" id="sessionCollapseBtn" type="button" aria-expanded="false" aria-controls="sessionFinishCard">Email Dad</button>
+    <button class="session-collapse-btn" id="sessionCollapseBtn" type="button" aria-expanded="false" aria-controls="sessionFinishCard">
+      <span class="session-collapse-title">Email Dad — 0/15 points</span>
+      <span class="session-collapse-detail">35 points unlocks early finish</span>
+    </button>
     <span class="session-finish-label">Current session</span>
     <time class="session-finish-time" id="sessionElapsed" aria-live="off">Active 00:00</time>
     <div class="session-requirement">
@@ -1995,7 +2013,12 @@
       const normalComplete = timeComplete && remainingPoints === 0;
       const earlyComplete = remainingEarlyPoints === 0;
       const ready = normalComplete || earlyComplete;
+      const pointProgress = Math.min(1, workPoints / REQUIRED_WORK_POINTS);
+      const borderStart = [167, 25, 25];
+      const borderEnd = [21, 120, 58];
+      const borderColor = borderStart.map((value, index) => Math.round(value + (borderEnd[index] - value) * pointProgress));
       const timeText = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+      els.sessionFinishCard.style.setProperty("--session-progress-color", `rgb(${borderColor.join(", ")})`);
       els.sessionElapsed.textContent = `Active ${timeText}`;
       els.sessionTimeProgress.textContent = `${timeText} / 15:00`;
       els.sessionTimeFill.style.width = Math.min(100, (activeSeconds / MANUAL_FINISH_SECONDS) * 100) + "%";
@@ -2005,6 +2028,10 @@
       els.sessionMathFill.style.width = Math.min(100, (mathAttempts / EARLY_FINISH_MATH) * 100) + "%";
       els.sessionWritingProgress.textContent = `${writingAssignments} / ${EARLY_FINISH_WRITING}`;
       els.sessionWritingFill.style.width = Math.min(100, (writingAssignments / EARLY_FINISH_WRITING) * 100) + "%";
+      els.sessionTimeFill.parentElement.classList.toggle("complete", timeComplete);
+      els.sessionWorkFill.parentElement.classList.toggle("complete", workPoints >= REQUIRED_WORK_POINTS);
+      els.sessionMathFill.parentElement.classList.toggle("complete", mathAttempts >= EARLY_FINISH_MATH);
+      els.sessionWritingFill.parentElement.classList.toggle("complete", writingAssignments >= EARLY_FINISH_WRITING);
       if (ready) {
         els.sessionNeeded.textContent = earlyComplete && !normalComplete
           ? `Early finish unlocked with ${workPoints} points!`
@@ -2017,6 +2044,16 @@
       }
       els.sessionFinishCard.classList.toggle("ready", ready);
       els.finishAndEmailBtn.disabled = !ready || finishEmailInFlight;
+      const collapsed = els.sessionFinishCard.classList.contains("collapsed");
+      const pointLabel = workPoints <= REQUIRED_WORK_POINTS
+        ? `${workPoints}/${REQUIRED_WORK_POINTS} points`
+        : `${workPoints} points`;
+      const earlyLabel = earlyComplete
+        ? "Early finish unlocked!"
+        : `${EARLY_FINISH_POINTS} points unlocks early finish`;
+      els.sessionCollapseBtn.innerHTML = collapsed
+        ? `<span class="session-collapse-title">Email Dad — ${pointLabel}</span><span class="session-collapse-detail">${earlyLabel}</span>`
+        : `<span class="session-collapse-title">Collapse Session Panel</span><span class="session-collapse-detail">${workPoints} work point${workPoints === 1 ? "" : "s"}</span>`;
       const parentEmailReady = Boolean(state.parentEmail);
       els.finishAndEmailBtn.textContent = finishEmailInFlight
         ? "Sending Summary..."
@@ -2420,12 +2457,12 @@
         const targetDen = den * factor;
         const targetNum = num * factor;
         return {
-          prompt: `Complete the equivalent fraction:\n${num}/${den} = ?/${targetDen}`,
+          prompt: `Complete the equivalent fraction:\n${num}/${den} = ?/${targetDen}\nType the complete fraction with /${targetDen}, not just the missing top number.`,
           answer: `${targetNum}/${targetDen}`,
           displayAnswer: `${targetNum}/${targetDen}`,
           type: "fractionExact",
           concept: "equivalent fractions",
-          explanation: `Multiply the numerator and denominator by ${factor} to make an equivalent fraction.`
+          explanation: `Multiply the numerator and denominator by ${factor}. Enter the full fraction ${targetNum}/${targetDen}, not only the missing numerator ${targetNum}.`
         };
       }
       const num1 = rand(1, Math.floor(den / 2));
@@ -3411,7 +3448,7 @@
       els.sessionCollapseBtn.addEventListener("click", () => {
         const collapsed = els.sessionFinishCard.classList.toggle("collapsed");
         els.sessionCollapseBtn.setAttribute("aria-expanded", String(!collapsed));
-        els.sessionCollapseBtn.textContent = collapsed ? "Email Dad" : "Collapse Email Dad";
+        renderSessionFinishControl();
       });
       els.finishAndEmailBtn.addEventListener("click", openFinishSessionModal);
       els.cancelFinishSessionBtn.addEventListener("click", closeFinishSessionModal);
